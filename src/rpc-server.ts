@@ -9,12 +9,12 @@ const a = procedure
   .use(() => ({ abc: 123 }))
   .use((context) => ({ ...context, xyz: 123 }))
   .input(() => 'hello')
-  // .define(({ context, input }) => {
-  //   console.log({ context, input });
-  // })
+  .define(({ context, input }) => {
+    console.log({ context, input });
+  })
   ;
 
-export function createRpcServer<P extends ProcedureBuilder<any, any, any, true>>(procedures: RecursiveDictionary<P>) {
+export function createRpcServer<P extends ProcedureBuilder<any, any, any>>(procedures: RecursiveDictionary<P>) {
 }
 
 const server = createRpcServer({
@@ -24,15 +24,3 @@ const server = createRpcServer({
     },
   },
 });
-
-// type OBJ<T> = {
-//   abc: T,
-// }
-
-// const obj: OBJ<true> = {};
-
-// function getObj(): OBJ<unknown> {
-//   return {
-//     abc: undefined,
-//   }
-// }
