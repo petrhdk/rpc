@@ -1,12 +1,12 @@
-interface MiddlewareFunction<TContextIn, TParsedInput, TContextOut> {
-  (context: TContextIn, input: TParsedInput): TContextOut, // TODO: promisify
+interface MiddlewareFunction<TContextIn, TContextOut> {
+  (context: TContextIn, rawInput: unknown): TContextOut, // TODO: promisify
 }
 
 // TODO: lots of "any" types can be improved by step-wise construction: first .use() then .input() then .define()
-function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
-  middlewares: MiddlewareFunction<any, any, any>[],
+export function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
+  middlewares: MiddlewareFunction<any, any>[],
   inputValidator?: (input: unknown) => TParsedInput,
-  handler?: (meta: { input: any, context: any }) => TOutput,
+  handler?: (input: any, context: any) => TOutput,
 }) {
   return {
 
@@ -15,7 +15,7 @@ function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
      */
     _def,
 
-    use<$NewTContext>(middleware: MiddlewareFunction<TContext, TParsedInput, $NewTContext>) {
+    use<$NewTContext>(middleware: MiddlewareFunction<TContext, $NewTContext>) {
       const { middlewares, inputValidator, handler } = this._def;
       return newProcedureBuilder<$NewTContext, TParsedInput, TOutput>({
         middlewares: [...middlewares, middleware],
@@ -33,7 +33,7 @@ function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
       });
     },
 
-    define<$NewTOutput>(handler: (meta: { input: TParsedInput, context: TContext }) => $NewTOutput) {
+    define<$NewTOutput>(handler: (input: TParsedInput, context: TContext) => $NewTOutput) {
       const { middlewares, inputValidator } = this._def;
       return newProcedureBuilder<TContext, TParsedInput, $NewTOutput>({
         middlewares: [...middlewares], // TODO: probably doesn't need destructuring
