@@ -1,5 +1,6 @@
 import type { Procedure } from './procedure.ts';
 import type { RpcServer } from './server.ts';
+import { isDefined } from '@petrhdk/util';
 
 type inferProcedureDictionary<$RpcServer> =
   $RpcServer extends RpcServer<infer $ProcedureDictionary>
@@ -38,8 +39,12 @@ export function createRpcClient<$RpcServer>(requestHandler: ((keyPath: string[],
       },
 
       // when the proxy is used as a function
-      apply(_target, _thisArg, args) {
-        return Promise.resolve(requestHandler(keyPath, args));
+      async apply(_target, _thisArg, args) {
+        const { output, error } = await requestHandler(keyPath, args);
+        if (isDefined(error)) {
+          throw error;
+        }
+        return output;
       },
     });
   }

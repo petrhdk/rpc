@@ -25,26 +25,33 @@ export function createRpcServer<
 ) {
   const server: RpcServer<D> = {
     async invoke(keyPath, rawInput) {
+      let output, error;
+      try {
       // find procedure
-      let target: any = procedureDictionary;
-      while (keyPath.length) {
-        target = target[keyPath.shift()!];
+        let target: any = procedureDictionary;
+        while (keyPath.length) {
+          target = target[keyPath.shift()!];
+        }
+        const procedure = target as BuiltProcedure;
+
+        // run middleware
+        let context;
+        for (const middleware of procedure._middlewares ?? []) {
+          context = await middleware(context, rawInput); // may throw exception
+        }
+
+        // parse input
+        const parsedInput = isDefined(procedure._inputValidator)
+          ? procedure._inputValidator.parse(rawInput) // may throw exception
+          : rawInput;
+
+        // invoke
+        await procedure._resolver?.(parsedInput, context);
       }
-      const procedure = target as BuiltProcedure;
-
-      // run middleware
-      let context;
-      for (const middleware of procedure._middlewares ?? []) {
-        context = await middleware(context, rawInput); // may throw exception
+      catch (e) {
+        error = e;
       }
-
-      // parse input
-      const parsedInput = isDefined(procedure._inputValidator)
-        ? procedure._inputValidator.parse(rawInput) // may throw exception
-        : rawInput;
-
-      // invoke
-      await procedure._resolver?.(parsedInput, context);
+      return { output, error };
     },
   };
   return server;
