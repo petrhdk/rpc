@@ -2,10 +2,17 @@ interface MiddlewareFunction<TContextIn, TContextOut> {
   (context: TContextIn, rawInput: unknown): TContextOut, // TODO: promisify
 }
 
+/**
+ * supports zod
+ */
+interface InputValidator<TParsedInput> {
+  parse: (rawInput: unknown) => TParsedInput,
+}
+
 // TODO: lots of "any" types can be improved by step-wise construction: first .use() then .input() then .define()
 export function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
   middlewares: MiddlewareFunction<any, any>[],
-  inputValidator?: (input: unknown) => TParsedInput,
+  inputValidator?: InputValidator<TParsedInput>,
   handler?: (input: any, context: any) => TOutput,
 }) {
   return {
@@ -24,7 +31,7 @@ export function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
       });
     },
 
-    input<$NewTParsedInput>(inputValidator: () => $NewTParsedInput) {
+    input<$NewTParsedInput>(inputValidator: InputValidator<$NewTParsedInput>) {
       const { middlewares, handler } = this._def;
       return newProcedureBuilder<TContext, $NewTParsedInput, TOutput>({
         middlewares: [...middlewares], // TODO: probably doesn't need destructuring // TODO: can be fixed with step-wise types where .use() is only allowed before .define()
@@ -51,7 +58,7 @@ export function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
  * const a = procedure
  *   .use(() => ({ abc: 123 }))
  *   .use((context) => ({ ...context, xyz: 123 }))
- *   .input(() => 'hello')
+ *   .input(z.string())
  *   .define(({ context, input }) => {
  *     console.log({ context, input });
  *   });

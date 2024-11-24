@@ -9,7 +9,7 @@ interface RecursiveDictionary<TLeave> {
 const a = procedure
   .use(() => ({ abc: 123 }))
   .use((context) => ({ ...context, xyz: 123 }))
-  .input(() => 'hello')
+  .input(z.string())
   .define((input, context) => {
     console.log({ context, input });
   })
@@ -37,7 +37,7 @@ export function createRpcServer<
 
       // parse input
       const parsedInput = isDefined(procedure._def.inputValidator)
-        ? procedure._def.inputValidator(rawInput) // may throw exception
+        ? procedure._def.inputValidator.parse(rawInput) // may throw exception
         : rawInput;
 
       // invoke
