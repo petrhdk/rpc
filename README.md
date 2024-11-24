@@ -18,5 +18,8 @@ const a = procedure
 
 # Development
 
++ Todo:
+  - server middlewares
+
 + Query builder documentation:
   - ![](docs/procedure-builder.excalidraw.svg)
