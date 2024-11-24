@@ -20,6 +20,9 @@ const a = procedure
 
 + Todo:
   - server middlewares
+  - try to unify procedures with context
+
+<br>
 
 + Query builder documentation:
   - ![](docs/procedure-builder.excalidraw.svg)
