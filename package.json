@@ -1,0 +1,29 @@
+{
+  "name": "@petrhdk/rpc",
+  "type": "module",
+  "version": "1.0.0",
+  "license": "MIT",
+  "repository": "github:petrhdk/rpc",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build:lib": "vite build --config vite.config.lib-build.ts"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.4.1",
+    "@petrhdk/util": "^3.1.0",
+    "eslint": "^9.10.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.3",
+    "vite-plugin-dts": "^4.2.1",
+    "zod": "^3.23.8"
+  }
+}

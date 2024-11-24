@@ -1,0 +1,29 @@
+/* eslint-disable jsonc/sort-keys */
+{
+  "include": ["src/**/*"],
+
+  "compilerOptions": {
+    /* compiler output */
+    "outDir": "dist",
+    "noEmit": true, // because bundler will generate the output files
+    "target": "ESNext", // output javascript version (before bundling)
+    "module": "ESNext", // output module syntax (before bundling)
+
+    /* behavior */
+    "lib": ["ESNext", "DOM", "DOM.Iterable"], // which type definitions of advanced language features to load
+    "moduleResolution": "Bundler", // how import statements/urls are resolved
+    "esModuleInterop": true, // "recommended" in docs // fix for es import of commonjs modules
+    "skipLibCheck": true, // "recommended" in docs // skip type checking of declaration files (.d.ts)
+    "strict": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true, // (already the default)
+    "forceConsistentCasingInFileNames": true, // (already the default)
+    "useDefineForClassFields": true, // (already the default)
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+    // "noErrorTruncation": true
+  }
+}

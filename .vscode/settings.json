@@ -1,0 +1,27 @@
+{
+  // === eslint plugin ===
+
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": [
+    // because defaults to ["javascript", "javascriptreact"]
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "html",
+    "markdown",
+    "json",
+    "jsonc",
+    "yaml"
+  ],
+
+  // === ide sugar ===
+
+  "editor.quickSuggestions": {
+    "strings": "on"
+  }
+}
