@@ -1,4 +1,4 @@
-import type { newProcedureBuilder } from './procedure.ts';
+import type { Procedure } from './procedure.ts';
 import type { RpcServer } from './server.ts';
 
 type inferProcedureDictionary<$RpcServer> =
@@ -13,15 +13,18 @@ type Promisify<$T> = $T extends Promise<any>
   ? $T
   : Promise<$T>;
 
-type inferClientProcedureDictionary<$ProcedureDictionary> = {
+type inferClient<$ProcedureDictionary> = {
   [$K in keyof $ProcedureDictionary]:
-  $ProcedureDictionary[$K] extends ReturnType<typeof newProcedureBuilder<
-    infer _,
-    infer $TParsedInput,
-    infer $TOutput
-  >>
-    ? (input: $TParsedInput) => Promisify<$TOutput>
-    : inferClientProcedureDictionary<$ProcedureDictionary[$K]>;
+  $ProcedureDictionary[$K] extends Procedure<
+    any,
+    any,
+    any,
+    infer $Input,
+    any,
+    infer $Output
+  >
+    ? (input: $Input) => Promisify<$Output>
+    : inferClient<$ProcedureDictionary[$K]>;
 };
 
 export function createRpcClient<$RpcServer>(requestHandler: ((keyPath: string[], args: any[]) => Promise<any>)) {
@@ -41,5 +44,5 @@ export function createRpcClient<$RpcServer>(requestHandler: ((keyPath: string[],
     });
   }
 
-  return createProxy([]) as any as inferClientProcedureDictionary<inferProcedureDictionary<$RpcServer>>;
+  return createProxy([]) as any as inferClient<inferProcedureDictionary<$RpcServer>>;
 }
