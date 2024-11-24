@@ -24,7 +24,7 @@ export function createRpcServer<
   procedureDictionary: D,
 ) {
   const server: RpcServer<D> = {
-    invoke(keyPath, rawInput) {
+    async invoke(keyPath, rawInput) {
       // find procedure
       let target: any = procedureDictionary;
       while (keyPath.length) {
@@ -35,7 +35,7 @@ export function createRpcServer<
       // run middleware
       let context;
       for (const middleware of procedure._middlewares ?? []) {
-        context = middleware(context, rawInput); // may throw exception
+        context = await middleware(context, rawInput); // may throw exception
       }
 
       // parse input
@@ -44,7 +44,7 @@ export function createRpcServer<
         : rawInput;
 
       // invoke
-      procedure._resolver?.(parsedInput, context);
+      await procedure._resolver?.(parsedInput, context);
     },
   };
   return server;
