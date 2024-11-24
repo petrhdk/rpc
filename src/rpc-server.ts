@@ -11,19 +11,22 @@ const a = procedure
   .use((context) => ({ ...context, xyz: 123 }))
   .input(z.string())
   .define((input, context) => {
-    console.log({ context, input });
-  })
-  ;
+    console.log({ context, input }); // eslint-disable-line no-console
+  });
+
+export interface RpcServer<_ProcedureDictionary> {
+  invoke: (keyPath: string[], rawInput: unknown) => void,
+};
 
 export function createRpcServer<
   D extends RecursiveDictionary<ReturnType<typeof newProcedureBuilder>>,
 >(
-  procedures: D,
+  procedureDictionary: D,
 ) {
-  return {
+  const server: RpcServer<D> = {
     invoke(keyPath: string[], rawInput: unknown) {
       // find procedure
-      let target: any = procedures;
+      let target: any = procedureDictionary;
       while (keyPath.length) {
         target = target[keyPath.shift()!];
       }
@@ -44,9 +47,10 @@ export function createRpcServer<
       procedure._def.handler?.(parsedInput, context);
     },
   };
+  return server;
 }
 
-const server = createRpcServer({
+const _exampleServer = createRpcServer({
   call: {
     me: {
       maybe: a,
@@ -54,3 +58,5 @@ const server = createRpcServer({
     },
   },
 });
+
+export type ExampleServer = typeof _exampleServer;
