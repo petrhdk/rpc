@@ -1,5 +1,4 @@
-import type { Procedure } from './procedure';
-import { isDefined } from '@petrhdk/util';
+import type { BuiltProcedure } from './procedure';
 
 interface RecursiveDictionary<TLeave> {
   [key: string]: TLeave | RecursiveDictionary<TLeave>,
@@ -9,17 +8,8 @@ export interface RpcServer<_ProcedureDictionary> {
   invoke: (keyPath: string[], rawInput: unknown) => void,
 };
 
-type BuiltProcedure = Procedure<
-  any,
-  any,
-  any,
-  any,
-  true, // TODO: this is currently not enforced by Typescript, mysterious
-  any
->;
-
 export function createRpcServer<
-  D extends RecursiveDictionary<BuiltProcedure>,
+  D extends RecursiveDictionary<BuiltProcedure<any, any, any>>,
 >(
   procedureDictionary: D,
 ) {
@@ -32,16 +22,18 @@ export function createRpcServer<
         while (keyPath.length) {
           target = target[keyPath.shift()!];
         }
-        const procedure = target as BuiltProcedure;
+        const procedure = target as BuiltProcedure<any, any, any>;
 
         // run middleware
         let context;
-        for (const middleware of procedure._middlewares ?? []) {
-          context = await middleware(context, rawInput); // may throw exception
+        if ('_middlewares' in procedure) {
+          for (const middleware of procedure._middlewares) {
+            context = await middleware(context, rawInput); // may throw exception
+          }
         }
 
         // parse input
-        const parsedInput = isDefined(procedure._inputValidator)
+        const parsedInput = '_inputValidator' in procedure
           ? procedure._inputValidator.parse(rawInput) // may throw exception
           : rawInput;
 

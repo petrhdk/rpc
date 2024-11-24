@@ -1,4 +1,8 @@
-# rpc
+# Usage
+
++ see [`src/_example.ts`](src/_example.ts)
+
+<br>
 
 ```ts
 const a = procedure
@@ -9,3 +13,10 @@ const a = procedure
     console.log({ context, input });
   });
 ```
+
+<br>
+
+# Development
+
++ Query builder documentation:
+  - ![](docs/procedure-builder.excalidraw.svg)

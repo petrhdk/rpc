@@ -1,71 +1,184 @@
 type Middleware<ContextIn, ContextOut> = (context: ContextIn, rawInput: unknown) => Promise<ContextOut> | ContextOut;
 
-type Resolver<Input, Context, Output> = (input: Input, context: Context) => Promise<Output> | Output;
+type Resolver<Context, Input, Output> = (input: Input, context: Context) => Promise<Output> | Output;
 
 /**
  * supports zod
  */
-interface InputValidator<TParsedInput> {
-  parse: (rawInput: unknown) => TParsedInput,
+interface InputValidator<Input> {
+  parse: (rawInput: unknown) => Input,
 }
 
-export interface Procedure<ContextDefined extends boolean, Context, InputDefined extends boolean, Input, Defined extends boolean, Output> {
-  /** @internal */
-  _middlewares: ContextDefined extends true ? [...Middleware<any, any>[], Middleware<any, Context>] : undefined,
+/* SEE README TO UNDERSTAND THE FLOW BETWEEN THE FOLLOWING TYPES */
 
-  /** @internal */
-  _inputValidator: InputDefined extends true ? InputValidator<Input> : undefined,
-
-  /** @internal */
-  _resolver: Defined extends true ? Resolver<any, any, Output> : undefined,
-
-  use: <NewContext>(middleware: Middleware<Context, NewContext>) => Procedure<true, NewContext, InputDefined, Input, Defined, Output>,
-
-  input: <NewInput>(inputValidator: InputValidator<NewInput>) => Procedure<ContextDefined, Context, true, NewInput, Defined, Output>,
-
-  define: <NewOutput>(resolver: Resolver<Input, Context, NewOutput>) => Procedure<ContextDefined, Context, InputDefined, Input, true, NewOutput>,
+interface ProcedureEmpty {
+  use: <NewContext>(middleware: Middleware<undefined, NewContext>) => ProcedureWithContext<NewContext>,
+  input: <Input>(inputValidator: InputValidator<Input>) => ProcedureWithInput<Input>,
+  define: <Input, Output>(resolver: Resolver<undefined, Input, Output>) => ProcedureWithResolver<Input, Output>,
 }
 
-export function newProcedure<ContextDefined extends boolean, Context, InputDefined extends boolean, Input, Defined extends boolean, Output>(
-  middlewares: ContextDefined extends true ? [...any[], Middleware<any, Context>] : undefined,
-  inputValidator: InputDefined extends true ? InputValidator<Input> : undefined,
-  resolver: Defined extends true ? (Resolver<Input, Context, Output>) : undefined,
-): Procedure<ContextDefined, Context, InputDefined, Input, Defined, Output> {
+interface ProcedureWithContext<Context> {
+  /** @internal */
+  _middlewares: [...Middleware<any, any>[], Middleware<any, Context>],
+  use: <NewContext>(middleware: Middleware<Context, NewContext>) => ProcedureWithContext<NewContext>,
+  input: <Input>(inputValidator: InputValidator<Input>) => ProcedureWithContextAndInput<Context, Input>,
+  define: <Input, Output>(resolver: Resolver<Context, Input, Output>) => ProcedureWithContextAndResolver<Context, Input, Output>,
+}
+
+interface ProcedureWithContextAndInput<Context, Input> {
+  /** @internal */
+  _middlewares: [...Middleware<any, any>[], Middleware<any, Context>],
+  /** @internal */
+  _inputValidator: InputValidator<Input>,
+  define: <Output>(resolver: Resolver<Context, Input, Output>) => ProcedureWithContextAndInputAndResolver<Context, Input, Output>,
+}
+
+interface ProcedureWithContextAndInputAndResolver<Context, Input, Output> {
+  /** @internal */
+  _middlewares: [...Middleware<any, any>[], Middleware<any, Context>],
+  /** @internal */
+  _inputValidator: InputValidator<Input>,
+  /** @internal */
+  _resolver: Resolver<Context, Input, Output>,
+}
+
+interface ProcedureWithContextAndResolver<Context, Input, Output> {
+  /** @internal */
+  _middlewares: [...Middleware<any, any>[], Middleware<any, Context>],
+  /** @internal */
+  _resolver: Resolver<Context, Input, Output>,
+}
+
+interface ProcedureWithInput<Input> {
+  /** @internal */
+  _inputValidator: InputValidator<Input>,
+  define: <Output>(resolver: Resolver<undefined, Input, Output>) => ProcedureWithInputAndResolver<Input, Output>,
+}
+
+interface ProcedureWithInputAndResolver<Input, Output> {
+  /** @internal */
+  _inputValidator: InputValidator<Input>,
+  /** @internal */
+  _resolver: Resolver<undefined, Input, Output>,
+}
+
+interface ProcedureWithResolver<Input, Output> {
+  /** @internal */
+  _resolver: Resolver<undefined, Input, Output>,
+}
+
+export type BuiltProcedure<Context, Input, Output> =
+  ProcedureWithContextAndInputAndResolver<Context, Input, Output>
+  | ProcedureWithContextAndResolver<Context, Input, Output>
+  | ProcedureWithInputAndResolver<Input, Output>
+  | ProcedureWithResolver<Input, Output>;
+
+export const procedure: ProcedureEmpty = {
+  use(middleware) {
+    return create_ProcedureWithContext_from_ProcedureEmpty(middleware);
+  },
+  input(inputValidator) {
+    return create_ProcedureWithInput_from_ProcedureEmpty(inputValidator);
+  },
+  define(resolver) {
+    return create_ProcedureWithResolver_from_ProcedureEmpty(resolver);
+  },
+};
+
+function create_ProcedureWithContext_from_ProcedureEmpty<NewContext>(
+  middleware: Middleware<undefined, NewContext>,
+): ProcedureWithContext<NewContext> {
   return {
-
-    /** @internal */
-    _middlewares: middlewares,
-
-    /** @internal */
-    _inputValidator: inputValidator,
-
-    /** @internal */
-    _resolver: resolver,
-
+    _middlewares: [middleware],
     use(middleware) {
-      return newProcedure(
-        [...(this._middlewares ?? []), middleware],
-        this._inputValidator,
-        this._resolver,
-      );
+      return create_ProcedureWithContext_from_ProcedureWithContext(this, middleware);
     },
-
     input(inputValidator) {
-      return newProcedure(
-        this._middlewares,
-        inputValidator,
-        this._resolver,
-      );
+      return create_ProcedureWithContextAndInput_from_ProcedureWithContext(this, inputValidator);
     },
-
     define(resolver) {
-      return newProcedure(
-        this._middlewares,
-        this._inputValidator,
-        resolver,
-      );
+      return create_ProcedureWithContextAndResolver_from_ProcedureWithContext(this, resolver);
     },
   };
 }
 
-export const procedure = newProcedure(undefined, undefined, undefined);
+function create_ProcedureWithContext_from_ProcedureWithContext<OldContext, NewContext>(
+  oldProcedure: ProcedureWithContext<OldContext>,
+  middleware: Middleware<OldContext, NewContext>,
+): ProcedureWithContext<NewContext> {
+  return {
+    _middlewares: [...oldProcedure._middlewares, middleware],
+    use(middleware) {
+      return create_ProcedureWithContext_from_ProcedureWithContext(this, middleware);
+    },
+    input(inputValidator) {
+      return create_ProcedureWithContextAndInput_from_ProcedureWithContext(this, inputValidator);
+    },
+    define(resolver) {
+      return create_ProcedureWithContextAndResolver_from_ProcedureWithContext(this, resolver);
+    },
+  };
+}
+
+function create_ProcedureWithContextAndInput_from_ProcedureWithContext<Context, Input>(
+  { _middlewares }: ProcedureWithContext<Context>,
+  inputValidator: InputValidator<Input>,
+): ProcedureWithContextAndInput<Context, Input> {
+  return {
+    _middlewares,
+    _inputValidator: inputValidator,
+    define(resolver) {
+      return create_ProcedureWithContextAndInputAndResolver_from_ProcedureWithContextAndInput(this, resolver);
+    },
+  };
+}
+
+function create_ProcedureWithContextAndInputAndResolver_from_ProcedureWithContextAndInput<Context, Input, Output>(
+  { _middlewares, _inputValidator }: ProcedureWithContextAndInput<Context, Input>,
+  resolver: Resolver<Context, Input, Output>,
+): ProcedureWithContextAndInputAndResolver<Context, Input, Output> {
+  return {
+    _middlewares,
+    _inputValidator,
+    _resolver: resolver,
+  };
+}
+
+function create_ProcedureWithContextAndResolver_from_ProcedureWithContext<Context, Input, Output>(
+  { _middlewares }: ProcedureWithContext<Context>,
+  resolver: Resolver<Context, Input, Output>,
+): ProcedureWithContextAndResolver<Context, Input, Output> {
+  return {
+    _middlewares,
+    _resolver: resolver,
+  };
+}
+
+function create_ProcedureWithInput_from_ProcedureEmpty<Input>(
+  inputValidator: InputValidator<Input>,
+): ProcedureWithInput<Input> {
+  return {
+    _inputValidator: inputValidator,
+    define(resolver) {
+      return create_ProcedureWithInputAndResolver_from_ProcedureWithInput(this, resolver);
+    },
+  };
+}
+
+function create_ProcedureWithInputAndResolver_from_ProcedureWithInput<Input, Output>(
+  oldProcedure: ProcedureWithInput<Input>,
+  resolver: Resolver<undefined, Input, Output>,
+) {
+  return {
+    _inputValidator: oldProcedure._inputValidator,
+    _resolver: resolver,
+  };
+}
+
+function create_ProcedureWithResolver_from_ProcedureEmpty<Input, Output>(
+  resolver: Resolver<undefined, Input, Output>,
+): ProcedureWithResolver<Input, Output> {
+  return {
+    _resolver: resolver,
+  };
+}

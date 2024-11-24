@@ -1,4 +1,4 @@
-import type { Procedure } from './procedure.ts';
+import type { BuiltProcedure } from './procedure.ts';
 import type { RpcServer } from './server.ts';
 import { isDefined } from '@petrhdk/util';
 
@@ -16,14 +16,7 @@ type Promisify<$T> = $T extends Promise<any>
 
 type inferClient<$ProcedureDictionary> = {
   [$K in keyof $ProcedureDictionary]:
-  $ProcedureDictionary[$K] extends Procedure<
-    any,
-    any,
-    any,
-    infer $Input,
-    any,
-    infer $Output
-  >
+  $ProcedureDictionary[$K] extends BuiltProcedure<any, infer $Input, infer $Output>
     ? (input: $Input) => Promisify<$Output>
     : inferClient<$ProcedureDictionary[$K]>;
 };
