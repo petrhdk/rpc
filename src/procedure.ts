@@ -51,19 +51,6 @@ export function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
   };
 }
 
-/**
- * usage example:
- *
- * ```ts
- * const a = procedure
- *   .use(() => ({ abc: 123 }))
- *   .use((context) => ({ ...context, xyz: 123 }))
- *   .input(z.string())
- *   .define(({ context, input }) => {
- *     console.log({ context, input });
- *   });
- * ```
- */
 export const procedure = newProcedureBuilder({
   middlewares: [],
   inputValidator: undefined,
