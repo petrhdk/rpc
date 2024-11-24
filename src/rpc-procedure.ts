@@ -2,71 +2,46 @@ interface MiddlewareFunction<TContextIn, TParsedInput, TContextOut> {
   (context: TContextIn, input: TParsedInput): TContextOut, // TODO: promisify
 }
 
-interface ProcedureBuilderDef<
-  TContext,
-  TParsedInput,
-  TOutput,
-> {
-  middlewares: MiddlewareFunction<any, TParsedInput, any>[],
+// TODO: lots of "any" types can be improved by step-wise construction: first .use() then .input() then .define()
+function newProcedureBuilder<TContext, TParsedInput, TOutput>(_def: {
+  middlewares: MiddlewareFunction<any, any, any>[],
   inputValidator?: (input: unknown) => TParsedInput,
-  handler?: (meta: { input: TParsedInput, context: TContext }) => TOutput,
-}
+  handler?: (meta: { input: any, context: any }) => TOutput,
+}) {
+  return {
 
-export interface ProcedureBuilder<
-  TContext,
-  TParsedInput,
-  TOutput,
-> {
-  /**
-   * @internal
-   */
-  _def: ProcedureBuilderDef<TContext, TParsedInput, TOutput>,
-
-  use: <$TContextOut>(
-    middleware: MiddlewareFunction<TContext, TParsedInput, $TContextOut>
-  ) => ProcedureBuilder<$TContextOut, TParsedInput, TOutput>,
-
-  input: <$NewTParsedInput>(
-    inputValidator: () => $NewTParsedInput
-  ) => ProcedureBuilder<TContext, $NewTParsedInput, TOutput>,
-
-  define: <$NewTOutput>(
-    handler: (meta: { input: TParsedInput, context: TContext }) => $NewTOutput
-  ) => ProcedureBuilder<TContext, TParsedInput, $NewTOutput>,
-};
-
-function newProcedureBuilder(_def: ProcedureBuilderDef<any, any, any>) {
-  const builder: ProcedureBuilder<any, any, any> = {
+    /**
+     * @internal
+     */
     _def,
 
-    use(middleware) {
+    use<$NewTContext>(middleware: MiddlewareFunction<TContext, TParsedInput, $NewTContext>) {
       const { middlewares, inputValidator, handler } = this._def;
-      return newProcedureBuilder({
+      return newProcedureBuilder<$NewTContext, TParsedInput, TOutput>({
         middlewares: [...middlewares, middleware],
         inputValidator,
         handler,
       });
     },
 
-    input(inputValidator) {
+    input<$NewTParsedInput>(inputValidator: () => $NewTParsedInput) {
       const { middlewares, handler } = this._def;
-      return newProcedureBuilder({
-        middlewares: [...middlewares], // TODO: probably doesn't need destructuring
+      return newProcedureBuilder<TContext, $NewTParsedInput, TOutput>({
+        middlewares: [...middlewares], // TODO: probably doesn't need destructuring // TODO: can be fixed with step-wise types where .use() is only allowed before .define()
         inputValidator,
         handler,
       });
     },
 
-    define(handler) {
+    define<$NewTOutput>(handler: (meta: { input: TParsedInput, context: TContext }) => $NewTOutput) {
       const { middlewares, inputValidator } = this._def;
-      return newProcedureBuilder({
+      return newProcedureBuilder<TContext, TParsedInput, $NewTOutput>({
         middlewares: [...middlewares], // TODO: probably doesn't need destructuring
         inputValidator,
         handler,
       });
     },
   };
-  return builder;
 }
 
 /**
