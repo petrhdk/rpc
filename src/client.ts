@@ -1,5 +1,5 @@
-import type { newProcedureBuilder } from './rpc-procedure.ts';
-import type { ExampleServer, RpcServer } from './rpc-server.ts';
+import type { newProcedureBuilder } from './procedure.ts';
+import type { RpcServer } from './server.ts';
 
 type inferProcedureDictionary<$RpcServer> =
   $RpcServer extends RpcServer<infer $ProcedureDictionary>
@@ -43,6 +43,3 @@ export function createRpcClient<$RpcServer>(requestHandler: ((keyPath: string[],
 
   return createProxy([]) as any as inferClientProcedureDictionary<inferProcedureDictionary<$RpcServer>>;
 }
-
-const client = createRpcClient<ExampleServer>(() => Promise.resolve(undefined));
-client.call.me.maybe('asdf');

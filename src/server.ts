@@ -1,18 +1,9 @@
+import type { newProcedureBuilder } from './procedure';
 import { isDefined } from '@petrhdk/util';
-import { z } from 'zod';
-import { type newProcedureBuilder, procedure } from './rpc-procedure';
 
 interface RecursiveDictionary<TLeave> {
   [key: string]: TLeave | RecursiveDictionary<TLeave>,
 }
-
-const a = procedure
-  .use(() => ({ abc: 123 }))
-  .use((context) => ({ ...context, xyz: 123 }))
-  .input(z.string())
-  .define((input, context) => {
-    console.log({ context, input }); // eslint-disable-line no-console
-  });
 
 export interface RpcServer<_ProcedureDictionary> {
   invoke: (keyPath: string[], rawInput: unknown) => void,
@@ -49,14 +40,3 @@ export function createRpcServer<
   };
   return server;
 }
-
-const _exampleServer = createRpcServer({
-  call: {
-    me: {
-      maybe: a,
-      yeah: procedure,
-    },
-  },
-});
-
-export type ExampleServer = typeof _exampleServer;
