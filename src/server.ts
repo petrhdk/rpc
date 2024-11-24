@@ -15,7 +15,6 @@ type BuiltProcedure = Procedure<
   any,
   any,
   true, // TODO: this is currently not enforced by Typescript, mysterious
-  any,
   any
 >;
 

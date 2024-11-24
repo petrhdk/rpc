@@ -18,13 +18,12 @@ type inferClient<$ProcedureDictionary> = {
   $ProcedureDictionary[$K] extends Procedure<
     any,
     any,
-    infer $InputDefined,
+    any,
     infer $Input,
     any,
-    infer $InputInferred,
     infer $Output
   >
-    ? (input: $InputDefined extends true ? $Input : $InputInferred) => Promisify<$Output>
+    ? (input: $Input) => Promisify<$Output>
     : inferClient<$ProcedureDictionary[$K]>;
 };
 

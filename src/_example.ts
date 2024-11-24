@@ -4,8 +4,8 @@ import { createRpcClient, createRpcServer, procedure } from './index.ts';
 const a = procedure
   .use(() => ({ abc: 123 }))
   .use((context) => ({ ...context, xyz: 456 }))
-  // .input(z.string())
-  .define((input: string, context) => {
+  .input(z.string())
+  .define((input, context) => {
     console.log({ context, input }); // eslint-disable-line no-console
   });
 
