@@ -1,8 +1,8 @@
 import type { BuiltProcedure } from './procedure';
 import { isDefined } from '@petrhdk/util';
 
-interface RecursiveDictionary<TLeave> {
-  [key: string]: TLeave | RecursiveDictionary<TLeave>,
+interface RecursiveDictionary<TLeaf> {
+  [key: string]: TLeaf | RecursiveDictionary<TLeaf>,
 }
 
 export interface BuiltServer<_ServerContext, _Routes> {};
