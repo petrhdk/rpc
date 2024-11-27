@@ -11,7 +11,7 @@ interface InputValidator<Input> {
 
 interface Procedure<Context> {
   /** @internal */
-  _middlewares: Middleware<any, any>[],
+  middlewares: Middleware<any, any>[],
   use: <NewContext>(middleware: Middleware<Context, NewContext>) => Procedure<NewContext>,
   input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureWithInputValidator<Context, NewInput>,
   define: <NewInput, NewOutput>(resolver: Resolver<Context, NewInput, NewOutput>) => BuiltProcedure<Context, NewInput, NewOutput>,
@@ -19,24 +19,24 @@ interface Procedure<Context> {
 
 interface ProcedureWithInputValidator<Context, Input> {
   /** @internal */
-  _middlewares: Middleware<any, any>[],
+  middlewares: Middleware<any, any>[],
   /** @internal */
-  _inputValidator: InputValidator<Input>,
+  inputValidator: InputValidator<Input>,
   use: <NewContext>(middleware: Middleware<Context, NewContext>) => ProcedureWithInputValidator<NewContext, Input>,
   define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => BuiltProcedure<Context, Input, NewOutput>,
 }
 
 export interface BuiltProcedure<Context, Input, Output> {
   /** @internal */
-  _middlewares: Middleware<any, any>[],
+  middlewares: Middleware<any, any>[],
   /** @internal */
-  _inputValidator?: InputValidator<Input>,
+  inputValidator?: InputValidator<Input>,
   /** @internal */
-  _resolver: Resolver<Context, Input, Output>,
+  resolver: Resolver<Context, Input, Output>,
 }
 
 export const procedure: Procedure<undefined> = {
-  _middlewares: [],
+  middlewares: [],
   use(middleware) {
     return addMiddleware_ProcedureEmpty(this, middleware);
   },
@@ -49,11 +49,11 @@ export const procedure: Procedure<undefined> = {
 };
 
 function addMiddleware_ProcedureEmpty<OldContext, NewContext>(
-  { _middlewares }: Procedure<OldContext>,
+  { middlewares }: Procedure<OldContext>,
   middleware: Middleware<OldContext, NewContext>,
 ): Procedure<NewContext> {
   return {
-    _middlewares: [..._middlewares, middleware],
+    middlewares: [...middlewares, middleware],
     use(middleware) {
       return addMiddleware_ProcedureEmpty(this, middleware);
     },
@@ -67,12 +67,12 @@ function addMiddleware_ProcedureEmpty<OldContext, NewContext>(
 }
 
 function addInputValidator_ProcedureEmpty<Context, NewInput>(
-  { _middlewares }: Procedure<Context>,
+  { middlewares }: Procedure<Context>,
   inputValidator: InputValidator<NewInput>,
 ): ProcedureWithInputValidator<Context, NewInput> {
   return {
-    _middlewares,
-    _inputValidator: inputValidator,
+    middlewares,
+    inputValidator,
     use(middleware) {
       return addMiddleware_ProcedureWithInputValidator(this, middleware);
     },
@@ -83,22 +83,22 @@ function addInputValidator_ProcedureEmpty<Context, NewInput>(
 }
 
 function addResolver_ProcedureEmpty<Context, NewInput, NewOutput>(
-  { _middlewares }: Procedure<Context>,
+  { middlewares }: Procedure<Context>,
   resolver: Resolver<Context, NewInput, NewOutput>,
 ): BuiltProcedure<Context, NewInput, NewOutput> {
   return {
-    _middlewares,
-    _resolver: resolver,
+    middlewares,
+    resolver,
   };
 }
 
 function addMiddleware_ProcedureWithInputValidator<OldContext, Input, NewContext>(
-  { _middlewares, _inputValidator }: ProcedureWithInputValidator<OldContext, Input>,
+  { middlewares, inputValidator }: ProcedureWithInputValidator<OldContext, Input>,
   middleware: Middleware<OldContext, NewContext>,
 ): ProcedureWithInputValidator<NewContext, Input> {
   return {
-    _middlewares: [..._middlewares, middleware],
-    _inputValidator,
+    middlewares: [...middlewares, middleware],
+    inputValidator,
     use(middleware) {
       return addMiddleware_ProcedureWithInputValidator(this, middleware);
     },
@@ -109,12 +109,12 @@ function addMiddleware_ProcedureWithInputValidator<OldContext, Input, NewContext
 }
 
 function addResolver_ProcedureWithInputValidator<Context, Input, NewOutput>(
-  { _middlewares, _inputValidator }: ProcedureWithInputValidator<Context, Input>,
+  { middlewares, inputValidator }: ProcedureWithInputValidator<Context, Input>,
   resolver: Resolver<Context, Input, NewOutput>,
 ): BuiltProcedure<Context, Input, NewOutput> {
   return {
-    _middlewares,
-    _inputValidator,
-    _resolver: resolver,
+    middlewares,
+    inputValidator,
+    resolver,
   };
 }

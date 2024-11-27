@@ -27,18 +27,18 @@ export function createRpcServer<
         const procedure = target as BuiltProcedure<any, any, any>;
 
         // parse input
-        const parsedInput = isDefined(procedure._inputValidator)
-          ? procedure._inputValidator.parse(rawInput) // may throw exception
+        const parsedInput = isDefined(procedure.inputValidator)
+          ? procedure.inputValidator.parse(rawInput) // may throw exception
           : rawInput;
 
         // run middleware
         let context;
-        for (const middleware of procedure._middlewares) {
+        for (const middleware of procedure.middlewares) {
           context = await middleware(context, rawInput); // may throw exception
         }
 
         // invoke
-        await procedure._resolver?.(parsedInput, context);
+        await procedure.resolver(parsedInput, context);
       }
       catch (e) {
         error = e;
