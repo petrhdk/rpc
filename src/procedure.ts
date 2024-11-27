@@ -22,7 +22,6 @@ interface ProcedureWithInputValidator<Context, Input> {
   middlewares: Middleware<any, any>[],
   /** @internal */
   inputValidator: InputValidator<Input>,
-  use: <NewContext>(middleware: Middleware<Context, NewContext>) => ProcedureWithInputValidator<NewContext, Input>,
   define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => BuiltProcedure<Context, Input, NewOutput>,
 }
 
@@ -73,9 +72,6 @@ function addInputValidator_ProcedureEmpty<Context, NewInput>(
   return {
     middlewares,
     inputValidator,
-    use(middleware) {
-      return addMiddleware_ProcedureWithInputValidator(this, middleware);
-    },
     define(resolver) {
       return addResolver_ProcedureWithInputValidator(this, resolver);
     },
@@ -89,22 +85,6 @@ function addResolver_ProcedureEmpty<Context, NewInput, NewOutput>(
   return {
     middlewares,
     resolver,
-  };
-}
-
-function addMiddleware_ProcedureWithInputValidator<OldContext, Input, NewContext>(
-  { middlewares, inputValidator }: ProcedureWithInputValidator<OldContext, Input>,
-  middleware: Middleware<OldContext, NewContext>,
-): ProcedureWithInputValidator<NewContext, Input> {
-  return {
-    middlewares: [...middlewares, middleware],
-    inputValidator,
-    use(middleware) {
-      return addMiddleware_ProcedureWithInputValidator(this, middleware);
-    },
-    define(resolver) {
-      return addResolver_ProcedureWithInputValidator(this, resolver);
-    },
   };
 }
 
