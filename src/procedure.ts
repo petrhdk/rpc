@@ -11,7 +11,7 @@ interface InputValidator<Input> {
 
 interface Procedure<ServerContext, Context> {
   /** @internal */
-  middlewares: Middleware<any, any, any>[],
+  middlewares: Middleware<ServerContext, any, any>[],
   use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => Procedure<ServerContext, NewContext>,
   input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureWithInputValidator<ServerContext, Context, NewInput>,
   define: <NewInput, NewOutput>(resolver: Resolver<Context, NewInput, NewOutput>) => BuiltProcedure<ServerContext, Context, NewInput, NewOutput>,
@@ -19,22 +19,22 @@ interface Procedure<ServerContext, Context> {
 
 interface ProcedureWithInputValidator<ServerContext, Context, Input> {
   /** @internal */
-  middlewares: Middleware<any, any, any>[],
+  middlewares: Middleware<ServerContext, any, any>[],
   /** @internal */
   inputValidator: InputValidator<Input>,
   define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => BuiltProcedure<ServerContext, Context, Input, NewOutput>,
 }
 
-export interface BuiltProcedure<_ServerContext, Context, Input, Output> {
+export interface BuiltProcedure<ServerContext, Context, Input, Output> {
   /** @internal */
-  middlewares: Middleware<any, any, any>[],
+  middlewares: Middleware<ServerContext, any, any>[],
   /** @internal */
   inputValidator?: InputValidator<Input>,
   /** @internal */
   resolver: Resolver<Context, Input, Output>,
 }
 
-export function procedure<ServerContext>(): Procedure<ServerContext, undefined> {
+export function procedure<ServerContext = undefined>(): Procedure<ServerContext, undefined> {
   return {
     middlewares: [],
     use(middleware) {
