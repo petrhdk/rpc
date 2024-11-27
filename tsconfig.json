@@ -23,7 +23,8 @@
     "resolveJsonModule": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "stripInternal": true // remove code marked with @internal from .d.ts output
     // "noErrorTruncation": true
   }
 }
