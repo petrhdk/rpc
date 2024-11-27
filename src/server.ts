@@ -38,7 +38,7 @@ export function createRpcServer<
         }
 
         // invoke
-        await procedure.resolver(parsedInput, context);
+        output = await procedure.resolver(parsedInput, context);
       }
       catch (e) {
         error = e;
