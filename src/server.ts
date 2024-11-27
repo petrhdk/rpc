@@ -5,46 +5,61 @@ interface RecursiveDictionary<TLeave> {
   [key: string]: TLeave | RecursiveDictionary<TLeave>,
 }
 
-export interface RpcServer<_ProcedureDictionary> {
-  invoke: (keyPath: string[], rawInput: unknown) => void,
+export interface BuiltServer<_ServerContext, _Routes> {};
+
+/**
+ * user calls like this:
+ * ```ts
+ * rpcServer
+ *  .setup(invokeRoute => ...)
+ *  .routes({ ... })
+ *  .listen();
+ * ```
+ */
+export const rpcServer = {
+  setup<ServerContext = undefined>(
+    serverSetup: (
+      invokeRoute: (keyPath: string[], rawInput: unknown, serverContext: ServerContext) => Promise<any>
+    ) => void,
+  ) {
+    return {
+      routes<Routes extends RecursiveDictionary<BuiltProcedure<ServerContext, any, any, any>>>(routes: Routes) {
+        return {
+          listen() {
+            serverSetup(async (keyPath, rawInput, serverContext) => {
+              let output, error;
+              try {
+                // find procedure
+                let target: any = routes;
+                while (keyPath.length) {
+                  target = target[keyPath.shift()!];
+                }
+                const procedure = target as BuiltProcedure<ServerContext, any, any, any>;
+
+                // run middleware
+                let context;
+                for (const middleware of procedure.middlewares) {
+                  context = await middleware(serverContext, context); // may throw exception
+                }
+
+                // parse input
+                const parsedInput = isDefined(procedure.inputValidator)
+                  ? procedure.inputValidator.parse(rawInput) // may throw exception
+                  : rawInput;
+
+                // invoke
+                output = await procedure.resolver(parsedInput, context);
+              }
+              catch (e) {
+                error = e;
+              }
+              return { output, error };
+            });
+
+            return {} as BuiltServer<ServerContext, Routes>;
+          },
+        };
+      },
+    };
+  },
 };
-
-export function createRpcServer<
-  D extends RecursiveDictionary<BuiltProcedure<any, any, any>>,
->(
-  procedureDictionary: D,
-) {
-  const server: RpcServer<D> = {
-    /** user calls this function for every incoming request, to trigger a procedure in the server */
-    async invoke(keyPath, rawInput) {
-      let output, error;
-      try {
-        // find procedure
-        let target: any = procedureDictionary;
-        while (keyPath.length) {
-          target = target[keyPath.shift()!];
-        }
-        const procedure = target as BuiltProcedure<any, any, any>;
-
-        // parse input
-        const parsedInput = isDefined(procedure.inputValidator)
-          ? procedure.inputValidator.parse(rawInput) // may throw exception
-          : rawInput;
-
-        // run middleware
-        let context;
-        for (const middleware of procedure.middlewares) {
-          context = await middleware(context, rawInput); // may throw exception
-        }
-
-        // invoke
-        output = await procedure.resolver(parsedInput, context);
-      }
-      catch (e) {
-        error = e;
-      }
-      return { output, error };
-    },
-  };
-  return server;
-}
