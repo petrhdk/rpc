@@ -48,14 +48,14 @@ export function procedure<ServerContext = undefined>(): ProcedureUndefined<Serve
   };
 }
 
-function addMiddleware<ServerContext, OldContext, $NewContext, Input>(
+function addMiddleware<ServerContext, OldContext, NewContext, Input>(
   oldProcedure: ProcedureUndefined<ServerContext, OldContext, Input>,
-  middleware: Middleware<ServerContext, OldContext, $NewContext>,
-): ProcedureUndefined<ServerContext, $NewContext, Input> {
+  middleware: Middleware<ServerContext, OldContext, NewContext>,
+): ProcedureUndefined<ServerContext, NewContext, Input> {
   return {
     ...oldProcedure,
     middlewares: [...oldProcedure.middlewares, middleware],
-  } as unknown as ProcedureUndefined<ServerContext, $NewContext, Input>;
+  } as unknown as ProcedureUndefined<ServerContext, NewContext, Input>;
 }
 
 function addInputValidator<ServerContext, Context, NewInput>(
