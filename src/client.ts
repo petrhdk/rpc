@@ -1,18 +1,12 @@
 import type { Procedure } from './procedure.ts';
-import type { BuiltServer } from './server.ts';
+import type { ClientToServerPayload, Router, ServerToClientPayload } from './router.ts';
+import type { Promisify } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 
 type inferProcedureDictionary<$RpcServer> =
-  $RpcServer extends BuiltServer<any, infer $ProcedureDictionary>
+  $RpcServer extends Router<any, infer $ProcedureDictionary>
     ? $ProcedureDictionary
     : never;
-
-/**
- * Wraps the return type of any given function type in Promise<> if it is not already a Promise
- */
-type Promisify<$T> = $T extends Promise<any>
-  ? $T
-  : Promise<$T>;
 
 type inferClient<$ProcedureDictionary> = {
   [$K in keyof $ProcedureDictionary]:
@@ -21,19 +15,24 @@ type inferClient<$ProcedureDictionary> = {
     : inferClient<$ProcedureDictionary[$K]>;
 };
 
-export function createRpcClient<$RpcServer>(requestHandler: ((keyPath: string[], args: any[]) => Promise<any>)) {
-  function createProxy(keyPath: string[]) {
-    const dummy = () => {};
+type RequestSender = (_: ClientToServerPayload) => Promise<ServerToClientPayload>;
 
-    return new Proxy(dummy, {
+function getDummy() { // TODO: test if dummy can be shared by all proxies
+  return () => {};
+}
+
+export function createRpcClient<$RpcServer>(requestSender: RequestSender) {
+  function createProxy(keyPath: string[]) {
+    return new Proxy(getDummy(), {
+
       // when a property is accessed on the proxy
-      get(_target, key: string) {
+      get(_, key: string) {
         return createProxy([...keyPath, key]);
       },
 
       // when the proxy is used as a function
-      async apply(_target, _thisArg, args) {
-        const { output, error } = await requestHandler(keyPath, args);
+      async apply(_, __, args) {
+        const { output, error } = await requestSender({ keyPath, rawInput: args[0] });
         if (isDefined(error)) {
           throw error;
         }

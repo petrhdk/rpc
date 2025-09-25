@@ -1,35 +1,43 @@
+import type { ServerToClientPayload } from './router.ts';
 import { z } from 'zod';
-import { createRpcClient, procedure, rpcServer } from './index.ts';
-
-const a = procedure<MyServerContext>()
-  .use(() => ({ abc: 123 }))
-  .use((_serverContext, context) => ({ ...context, xyz: 456 }))
-  .input(z.string())
-  .define((input: string, context) => {
-    console.log({ context, input }); // eslint-disable-line no-console
-  });
+import { createRpcClient, procedure, router } from './index.ts';
 
 interface MyServerContext {
   user: string,
 }
 
-const _exampleServer = rpcServer
-  .setup((invokeRoute: (keyPath: string[], rawInput: unknown, serverContext: MyServerContext) => Promise<any>) => {
-    setTimeout(() => {
-      invokeRoute(['call', 'me', 'maybe'], 'asdf', { user: 'ye' });
-    });
-  })
-  .routes({
-    call: {
-      me: {
-        maybe: a,
-        // yeah: procedure, // not allowed
-      },
+const p = procedure<MyServerContext>()
+  .use(({ user }) => ({ user, abc: 123 }))
+  .use((_, previousContext) => ({ ...previousContext, xyz: 456 }))
+  .input(z.string())
+  .define((input: string, context) => {
+    console.log({ context, input }); // eslint-disable-line no-console
+    return 123;
+  });
+
+const server = router<MyServerContext>().routes({
+  call: {
+    me: {
+      maybe: p,
+      // yeah: procedure(), // not allowed
     },
-  })
-  .listen();
+  },
+});
+export type ExampleServer = typeof server;
 
-export type ExampleServer = typeof _exampleServer;
+// set up your HTTP server (or similar).
+// ...
+server.invokeRoute(
+  {
+    keyPath: ['call', 'me', 'maybe'],
+    rawInput: 'asdf',
+  },
+  { user: 'ye' },
+);
 
-const client = createRpcClient<ExampleServer>(() => Promise.resolve(undefined));
+const client = createRpcClient<ExampleServer>(async (_clientToServerPayload) => {
+  // send to server
+  const response: ServerToClientPayload = await /* ... */ { output: 123, error: undefined };
+  return response;
+});
 client.call.me.maybe('asdf');

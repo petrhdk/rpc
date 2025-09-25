@@ -1,4 +1,4 @@
-type MaybePromise<T> = Promise<T> | T;
+import type { MaybePromise } from './util.ts';
 
 type Middleware<ServerContext, Context, NewContext> =
   (serverContext: ServerContext, context: Context,) => MaybePromise<NewContext>;
