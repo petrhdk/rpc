@@ -15,18 +15,18 @@ const p = rpc.procedure<MyServerContext>()
     return 123;
   });
 
-const server = rpc.router<MyServerContext>().routes({
+const router = rpc.router<MyServerContext>().routes({
   call: {
     me: {
       maybe: p,
     },
   },
 });
-export type ExampleServer = typeof server;
+export type Router = typeof router;
 
 // set up your HTTP server (or similar).
 // ...
-server.invokeRoute(
+router.invokeRoute(
   {
     keyPath: ['call', 'me', 'maybe'],
     rawInput: 'asdf',
@@ -34,7 +34,7 @@ server.invokeRoute(
   { user: 'ye' },
 );
 
-const client = rpc.client<ExampleServer>(async (_clientToServerPayload) => {
+const client = rpc.client<Router>(async (_clientToServerPayload) => {
   // send to server
   const response: ServerToClientPayload = await /* ... */ { output: 123, error: undefined };
   return response;

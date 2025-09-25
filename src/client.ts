@@ -3,16 +3,16 @@ import type { ClientToServerPayload, Router, ServerToClientPayload } from './rou
 import type { Promisify } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 
-type inferProcedureDictionary<$RpcServer> =
-  $RpcServer extends Router<any, infer $ProcedureDictionary>
-    ? $ProcedureDictionary
+type inferRoutes<$Router> =
+  $Router extends Router<any, infer $Routes>
+    ? $Routes
     : never;
 
-type inferClient<$ProcedureDictionary> = {
-  [$K in keyof $ProcedureDictionary]:
-  $ProcedureDictionary[$K] extends Procedure<any, any, infer $Input, infer $Output>
+type inferClient<$Routes> = {
+  [$K in keyof $Routes]:
+  $Routes[$K] extends Procedure<any, any, infer $Input, infer $Output>
     ? (input: $Input) => Promisify<$Output>
-    : inferClient<$ProcedureDictionary[$K]>;
+    : inferClient<$Routes[$K]>;
 };
 
 type RequestSender = (_: ClientToServerPayload) => Promise<ServerToClientPayload>;
@@ -21,7 +21,7 @@ function getDummy() { // TODO: test if dummy can be shared by all proxies
   return () => {};
 }
 
-export function client<$RpcServer>(requestSender: RequestSender) {
+export function client<Router>(requestSender: RequestSender) {
   function createProxy(keyPath: string[]) {
     return new Proxy(getDummy(), {
 
@@ -41,5 +41,5 @@ export function client<$RpcServer>(requestSender: RequestSender) {
     });
   }
 
-  return createProxy([]) as any as inferClient<inferProcedureDictionary<$RpcServer>>;
+  return createProxy([]) as any as inferClient<inferRoutes<Router>>;
 }
