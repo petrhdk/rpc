@@ -3,7 +3,7 @@ import type { MaybePromise } from './util.ts';
 type Middleware<ServerContext, Context, NewContext> =
   (context: Context, serverContext: ServerContext) => MaybePromise<NewContext>;
 
-type Resolver<ServerContext, Context, Input, Output> =
+type Handler<ServerContext, Context, Input, Output> =
   (input: Input, context: Context, serverContext: ServerContext) => MaybePromise<Output>;
 
 // based on `zod`
@@ -23,14 +23,14 @@ interface ProcedureUndefined<
 
   use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureUndefined<ServerContext, NewContext, Input>,
   input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureUndefined<ServerContext, Context, NewInput>,
-  define: <NewOutput>(resolver: Resolver<ServerContext, Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
+  define: <NewOutput>(handler: Handler<ServerContext, Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
 }
 
 export interface Procedure<ServerContext, Context, Input, Output>
   extends Omit<ProcedureUndefined<ServerContext, Context, Input>, 'use' | 'input' | 'define'> {
 
   /** @internal */
-  resolver: Resolver<ServerContext, Context, Input, Output>,
+  handler: Handler<ServerContext, Context, Input, Output>,
 }
 
 export function procedure<ServerContext = undefined>(): ProcedureUndefined<ServerContext, undefined, undefined> {
@@ -42,8 +42,8 @@ export function procedure<ServerContext = undefined>(): ProcedureUndefined<Serve
     input(inputValidator) {
       return addInputValidator(this, inputValidator);
     },
-    define(resolver) {
-      return addResolver(this, resolver);
+    define(handler) {
+      return addHandler(this, handler);
     },
   };
 }
@@ -68,13 +68,13 @@ function addInputValidator<ServerContext, Context, NewInput>(
   };
 }
 
-function addResolver<ServerContext, Context, Input, Output>(
+function addHandler<ServerContext, Context, Input, Output>(
   oldProcedure: ProcedureUndefined<ServerContext, Context, Input>,
-  resolver: Resolver<ServerContext, Context, Input, Output>,
+  handler: Handler<ServerContext, Context, Input, Output>,
 ): Procedure<ServerContext, Context, Input, Output> {
   return {
     middlewares: oldProcedure.middlewares,
     inputValidator: oldProcedure.inputValidator,
-    resolver,
+    handler,
   };
 }
