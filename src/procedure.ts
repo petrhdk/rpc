@@ -6,101 +6,75 @@ type Middleware<ServerContext, Context, NewContext> =
 type Resolver<Context, Input, Output> =
   (input: Input, context: Context) => MaybePromise<Output>;
 
-// supports zod
+// based on `zod`
 interface InputValidator<Input> {
   parse: (rawInput: unknown) => Input,
 }
 
-/* SEE README TO UNDERSTAND THE FLOW BETWEEN THE FOLLOWING TYPES */
-
-interface ProcedureWithMiddlewares<ServerContext, Context> {
-  /** @internal */
-  middlewares: Middleware<ServerContext, any, any>[],
-  use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureWithMiddlewares<ServerContext, NewContext>,
-  input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureWithInputValidator<ServerContext, Context, NewInput>,
-  define: <NewInput, NewOutput>(resolver: Resolver<Context, NewInput, NewOutput>) => BuiltProcedure<ServerContext, Context, NewInput, NewOutput>,
-}
-
-interface ProcedureWithInputValidator<ServerContext, Context, Input> {
-  /** @internal */
-  middlewares: Middleware<ServerContext, any, any>[],
-  /** @internal */
-  inputValidator: InputValidator<Input>,
-  define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => BuiltProcedure<ServerContext, Context, Input, NewOutput>,
-}
-
-export interface BuiltProcedure<ServerContext, Context, Input, Output> {
+interface ProcedureUndefined<
+  ServerContext,
+  Context,
+  Input,
+> {
   /** @internal */
   middlewares: Middleware<ServerContext, any, any>[],
   /** @internal */
   inputValidator?: InputValidator<Input>,
+
+  use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureUndefined<ServerContext, NewContext, Input>,
+  input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureUndefined<ServerContext, Context, NewInput>,
+  define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => Procedure<Context, Input, NewOutput>,
+}
+
+export interface Procedure<Context, Input, Output>
+  extends Omit<ProcedureUndefined<any, Context, Input>, 'use' | 'input' | 'define'> {
+
   /** @internal */
   resolver: Resolver<Context, Input, Output>,
 }
 
-export function procedure<ServerContext = undefined>(): ProcedureWithMiddlewares<ServerContext, undefined> {
+export function procedure<ServerContext = undefined>(): ProcedureUndefined<ServerContext, undefined, undefined> {
   return {
     middlewares: [],
     use(middleware) {
-      return addMiddleware_ProcedureWithMiddlewares(this, middleware);
+      return addMiddleware(this, middleware);
     },
     input(inputValidator) {
-      return addInputValidator_ProcedureWithMiddlewares(this, inputValidator);
+      return addInputValidator(this, inputValidator);
     },
     define(resolver) {
-      return addResolver_ProcedureWithMiddlewares(this, resolver);
+      return addResolver(this, resolver);
     },
   };
 }
 
-function addMiddleware_ProcedureWithMiddlewares<ServerContext, Context, NewContext>(
-  { middlewares }: ProcedureWithMiddlewares<ServerContext, Context>,
-  middleware: Middleware<ServerContext, Context, NewContext>,
-): ProcedureWithMiddlewares<ServerContext, NewContext> {
+function addMiddleware<ServerContext, OldContext, $NewContext, Input>(
+  oldProcedure: ProcedureUndefined<ServerContext, OldContext, Input>,
+  middleware: Middleware<ServerContext, OldContext, $NewContext>,
+): ProcedureUndefined<ServerContext, $NewContext, Input> {
   return {
-    middlewares: [...middlewares, middleware],
-    use(middleware) {
-      return addMiddleware_ProcedureWithMiddlewares(this, middleware);
-    },
-    input(inputValidator) {
-      return addInputValidator_ProcedureWithMiddlewares(this, inputValidator);
-    },
-    define(resolver) {
-      return addResolver_ProcedureWithMiddlewares(this, resolver);
-    },
-  };
+    ...oldProcedure,
+    middlewares: [...oldProcedure.middlewares, middleware],
+  } as unknown as ProcedureUndefined<ServerContext, $NewContext, Input>;
 }
 
-function addInputValidator_ProcedureWithMiddlewares<ServerContext, Context, NewInput>(
-  { middlewares }: ProcedureWithMiddlewares<any, Context>,
+function addInputValidator<ServerContext, Context, NewInput>(
+  oldProcedure: ProcedureUndefined<ServerContext, Context, any>,
   inputValidator: InputValidator<NewInput>,
-): ProcedureWithInputValidator<ServerContext, Context, NewInput> {
+): ProcedureUndefined<ServerContext, Context, NewInput> {
   return {
-    middlewares,
+    ...oldProcedure,
     inputValidator,
-    define(resolver) {
-      return addResolver_ProcedureWithInputValidator(this, resolver);
-    },
   };
 }
 
-function addResolver_ProcedureWithMiddlewares<ServerContext, Context, NewInput, NewOutput>(
-  { middlewares }: ProcedureWithMiddlewares<any, Context>,
-  resolver: Resolver<Context, NewInput, NewOutput>,
-): BuiltProcedure<ServerContext, Context, NewInput, NewOutput> {
+function addResolver<ServerContext, Context, Input, Output>(
+  oldProcedure: ProcedureUndefined<ServerContext, Context, Input>,
+  resolver: Resolver<Context, Input, Output>,
+): Procedure<Context, Input, Output> {
   return {
-    middlewares,
-    resolver,
-  };
-}
-
-function addResolver_ProcedureWithInputValidator<ServerContext, Context, Input, NewOutput>(
-  { middlewares, inputValidator }: ProcedureWithInputValidator<ServerContext, Context, Input>,
-  resolver: Resolver<Context, Input, NewOutput>,
-): BuiltProcedure<ServerContext, Context, Input, NewOutput> {
-  return {
-    middlewares,
-    inputValidator,
+    middlewares: oldProcedure.middlewares,
+    inputValidator: oldProcedure.inputValidator,
     resolver,
   };
 }

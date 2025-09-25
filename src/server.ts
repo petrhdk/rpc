@@ -1,4 +1,4 @@
-import type { BuiltProcedure } from './procedure';
+import type { Procedure } from './procedure.ts';
 import { isDefined } from '@petrhdk/util';
 
 interface RecursiveDictionary<TLeaf> {
@@ -14,7 +14,7 @@ export const rpcServer = {
     ) => void,
   ) {
     return {
-      routes<Routes extends RecursiveDictionary<BuiltProcedure<ServerContext, any, any, any>>>(routes: Routes) {
+      routes<Routes extends RecursiveDictionary<Procedure<any, any, any>>>(routes: Routes) {
         return {
           listen() {
             serverSetup(async (keyPath, rawInput, serverContext) => {
@@ -25,7 +25,7 @@ export const rpcServer = {
                 while (keyPath.length) {
                   target = target[keyPath.shift()!];
                 }
-                const procedure = target as BuiltProcedure<ServerContext, any, any, any>;
+                const procedure = target as Procedure<any, any, any>;
 
                 // run middleware
                 let context;

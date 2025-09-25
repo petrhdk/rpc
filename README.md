@@ -2,21 +2,9 @@
 
 + see [`src/_example.ts`](src/_example.ts)
 
-<br>
+<br><br>
 
-```ts
-const a = procedure
-  .use(() => ({ abc: 123 }))
-  .use((context) => ({ ...context, xyz: 123 }))
-  .input(z.string())
-  .define(({ context, input }) => {
-    console.log({ context, input });
-  });
-```
+# Developer info
 
-<br>
-
-# Development
-
-+ Query builder documentation:
-  - ![](docs/procedure-builder.excalidraw.svg)
+## Query builder
++ ![](docs/procedures.drawio.svg)

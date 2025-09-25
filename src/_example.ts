@@ -1,10 +1,10 @@
-// import { z } from 'zod';
+import { z } from 'zod';
 import { createRpcClient, procedure, rpcServer } from './index.ts';
 
 const a = procedure<MyServerContext>()
   .use(() => ({ abc: 123 }))
-  .use((serverContext, context) => ({ ...context, xyz: 456 }))
-  // .input(z.string())
+  .use((_serverContext, context) => ({ ...context, xyz: 456 }))
+  .input(z.string())
   .define((input: string, context) => {
     console.log({ context, input }); // eslint-disable-line no-console
   });
