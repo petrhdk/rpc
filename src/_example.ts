@@ -1,11 +1,12 @@
+import type { ServerToClientPayload } from './index.ts';
 import { z } from 'zod';
-import { createRpcClient, procedure, router, type ServerToClientPayload } from './index.ts';
+import * as rpc from './index.ts';
 
 interface MyServerContext {
   user: string,
 }
 
-const p = procedure<MyServerContext>()
+const p = rpc.procedure<MyServerContext>()
   .use((_, { user }) => ({ user, abc: 123 }))
   .use((previousContext) => ({ ...previousContext, xyz: 456 }))
   .input(z.string())
@@ -14,7 +15,7 @@ const p = procedure<MyServerContext>()
     return 123;
   });
 
-const server = router<MyServerContext>().routes({
+const server = rpc.router<MyServerContext>().routes({
   call: {
     me: {
       maybe: p,
@@ -34,7 +35,7 @@ server.invokeRoute(
   { user: 'ye' },
 );
 
-const client = createRpcClient<ExampleServer>(async (_clientToServerPayload) => {
+const client = rpc.createRpcClient<ExampleServer>(async (_clientToServerPayload) => {
   // send to server
   const response: ServerToClientPayload = await /* ... */ { output: 123, error: undefined };
   return response;
