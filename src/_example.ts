@@ -1,6 +1,5 @@
-import type { ServerToClientPayload } from './router.ts';
 import { z } from 'zod';
-import { createRpcClient, procedure, router } from './index.ts';
+import { createRpcClient, procedure, router, type ServerToClientPayload } from './index.ts';
 
 interface MyServerContext {
   user: string,
