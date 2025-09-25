@@ -35,7 +35,7 @@ server.invokeRoute(
   { user: 'ye' },
 );
 
-const client = rpc.createRpcClient<ExampleServer>(async (_clientToServerPayload) => {
+const client = rpc.client<ExampleServer>(async (_clientToServerPayload) => {
   // send to server
   const response: ServerToClientPayload = await /* ... */ { output: 123, error: undefined };
   return response;

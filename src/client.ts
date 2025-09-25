@@ -21,7 +21,7 @@ function getDummy() { // TODO: test if dummy can be shared by all proxies
   return () => {};
 }
 
-export function createRpcClient<$RpcServer>(requestSender: RequestSender) {
+export function client<$RpcServer>(requestSender: RequestSender) {
   function createProxy(keyPath: string[]) {
     return new Proxy(getDummy(), {
 
