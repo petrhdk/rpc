@@ -3,8 +3,8 @@ import type { MaybePromise } from './util.ts';
 type Middleware<ServerContext, Context, NewContext> =
   (serverContext: ServerContext, context: Context,) => MaybePromise<NewContext>;
 
-type Resolver<Context, Input, Output> =
-  (input: Input, context: Context) => MaybePromise<Output>;
+type Resolver<ServerContext, Context, Input, Output> =
+  (input: Input, context: Context, serverContext: ServerContext) => MaybePromise<Output>;
 
 // based on `zod`
 interface InputValidator<Input> {
@@ -23,14 +23,14 @@ interface ProcedureUndefined<
 
   use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureUndefined<ServerContext, NewContext, Input>,
   input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureUndefined<ServerContext, Context, NewInput>,
-  define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
+  define: <NewOutput>(resolver: Resolver<ServerContext, Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
 }
 
 export interface Procedure<ServerContext, Context, Input, Output>
   extends Omit<ProcedureUndefined<ServerContext, Context, Input>, 'use' | 'input' | 'define'> {
 
   /** @internal */
-  resolver: Resolver<Context, Input, Output>,
+  resolver: Resolver<ServerContext, Context, Input, Output>,
 }
 
 export function procedure<ServerContext = undefined>(): ProcedureUndefined<ServerContext, undefined, undefined> {
@@ -70,7 +70,7 @@ function addInputValidator<ServerContext, Context, NewInput>(
 
 function addResolver<ServerContext, Context, Input, Output>(
   oldProcedure: ProcedureUndefined<ServerContext, Context, Input>,
-  resolver: Resolver<Context, Input, Output>,
+  resolver: Resolver<ServerContext, Context, Input, Output>,
 ): Procedure<ServerContext, Context, Input, Output> {
   return {
     middlewares: oldProcedure.middlewares,

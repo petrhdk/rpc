@@ -51,7 +51,7 @@ export function router<ServerContext>(): RouterUndefined<ServerContext> {
               : rawInput;
 
             // invoke procedure resolver
-            output = await procedure.resolver(parsedInput, context); // may throw exception
+            output = await procedure.resolver(parsedInput, context, serverContext); // may throw exception
           }
           catch (e) {
             error = e;
