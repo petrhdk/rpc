@@ -6,8 +6,8 @@ interface MyServerContext {
 }
 
 const p = procedure<MyServerContext>()
-  .use(({ user }) => ({ user, abc: 123 }))
-  .use((_, previousContext) => ({ ...previousContext, xyz: 456 }))
+  .use((_, { user }) => ({ user, abc: 123 }))
+  .use((previousContext) => ({ ...previousContext, xyz: 456 }))
   .input(z.string())
   .define((input: string, context) => {
     console.log({ context, input }); // eslint-disable-line no-console

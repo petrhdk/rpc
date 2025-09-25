@@ -1,7 +1,7 @@
 import type { MaybePromise } from './util.ts';
 
 type Middleware<ServerContext, Context, NewContext> =
-  (serverContext: ServerContext, context: Context,) => MaybePromise<NewContext>;
+  (context: Context, serverContext: ServerContext) => MaybePromise<NewContext>;
 
 type Resolver<ServerContext, Context, Input, Output> =
   (input: Input, context: Context, serverContext: ServerContext) => MaybePromise<Output>;

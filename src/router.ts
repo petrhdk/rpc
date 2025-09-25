@@ -42,7 +42,7 @@ export function router<ServerContext>(): RouterUndefined<ServerContext> {
             // run procedure middleware
             let context;
             for (const middleware of procedure.middlewares) {
-              context = await middleware(serverContext, context); // may throw exception
+              context = await middleware(context, serverContext); // may throw exception
             }
 
             // run procedure inputValidator (using `zod`)
