@@ -1,6 +1,10 @@
-type Middleware<ServerContext, Context, NewContext> = (serverContext: ServerContext, context: Context) => Promise<NewContext> | NewContext;
+type MaybePromise<T> = Promise<T> | T;
 
-type Resolver<Context, Input, Output> = (input: Input, context: Context) => Promise<Output> | Output;
+type Middleware<ServerContext, Context, NewContext> =
+  (serverContext: ServerContext, context: Context,) => MaybePromise<NewContext>;
+
+type Resolver<Context, Input, Output> =
+  (input: Input, context: Context) => MaybePromise<Output>;
 
 // supports zod
 interface InputValidator<Input> {
