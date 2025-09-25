@@ -10,7 +10,7 @@ type inferProcedureDictionary<$RpcServer> =
 
 type inferClient<$ProcedureDictionary> = {
   [$K in keyof $ProcedureDictionary]:
-  $ProcedureDictionary[$K] extends Procedure<any, infer $Input, infer $Output>
+  $ProcedureDictionary[$K] extends Procedure<any, any, infer $Input, infer $Output>
     ? (input: $Input) => Promisify<$Output>
     : inferClient<$ProcedureDictionary[$K]>;
 };

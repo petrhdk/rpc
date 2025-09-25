@@ -23,11 +23,11 @@ interface ProcedureUndefined<
 
   use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureUndefined<ServerContext, NewContext, Input>,
   input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureUndefined<ServerContext, Context, NewInput>,
-  define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => Procedure<Context, Input, NewOutput>,
+  define: <NewOutput>(resolver: Resolver<Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
 }
 
-export interface Procedure<Context, Input, Output>
-  extends Omit<ProcedureUndefined<any, Context, Input>, 'use' | 'input' | 'define'> {
+export interface Procedure<ServerContext, Context, Input, Output>
+  extends Omit<ProcedureUndefined<ServerContext, Context, Input>, 'use' | 'input' | 'define'> {
 
   /** @internal */
   resolver: Resolver<Context, Input, Output>,
@@ -71,7 +71,7 @@ function addInputValidator<ServerContext, Context, NewInput>(
 function addResolver<ServerContext, Context, Input, Output>(
   oldProcedure: ProcedureUndefined<ServerContext, Context, Input>,
   resolver: Resolver<Context, Input, Output>,
-): Procedure<Context, Input, Output> {
+): Procedure<ServerContext, Context, Input, Output> {
   return {
     middlewares: oldProcedure.middlewares,
     inputValidator: oldProcedure.inputValidator,

@@ -3,7 +3,7 @@ import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 
 interface RouterUndefined<ServerContext> {
-  routes: <Routes extends RecursiveDictionary<Procedure<any, any, any>>>(routes: Routes) => Router<ServerContext, Routes>,
+  routes: <Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(routes: Routes) => Router<ServerContext, Routes>,
 }
 
 export interface ClientToServerPayload {
@@ -37,7 +37,7 @@ export function router<ServerContext>(): RouterUndefined<ServerContext> {
             while (keyPath.length) {
               target = target[keyPath.shift()!]; // may throw exception
             }
-            const procedure = target as Procedure<any, any, any>;
+            const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
 
             // run procedure middleware
             let context;
