@@ -19,7 +19,6 @@ const server = rpc.router<MyServerContext>().routes({
   call: {
     me: {
       maybe: p,
-      // yeah: procedure(), // not allowed
     },
   },
 });
