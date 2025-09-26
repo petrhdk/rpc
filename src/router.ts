@@ -23,7 +23,7 @@ export interface Router<ServerContext, Routes> {
   invokeRoute: (_: ClientToServerPayload, serverContext: ServerContext) => Promise<ServerToClientPayload>,
 }
 
-export function router<ServerContext>(): RouterUndefined<ServerContext> {
+export function router<ServerContext = undefined>(): RouterUndefined<ServerContext> {
   return { // RouterUndefined
     routes(routes) {
       return { // Router
