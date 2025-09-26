@@ -5,8 +5,8 @@ export default defineConfig({
   plugins: [dts()],
   build: {
     lib: {
-      entry: { 'index': 'src/index.ts' },
-      formats: ['es','cjs'],
+      entry: { index: 'src/index.ts' },
+      formats: ['es', 'cjs'],
     },
     outDir: 'dist/',
   },
