@@ -11,10 +11,11 @@ export interface ClientToServerPayload {
   rawInput: unknown,
 }
 
-export interface ServerToClientPayload {
-  output?: unknown,
-  error?: string,
-}
+export type ServerToClientPayload = {
+  output: unknown,
+} | {
+  error: string,
+};
 
 export interface Router<ServerContext, Routes> {
   /** @internal */

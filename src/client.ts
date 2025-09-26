@@ -1,7 +1,6 @@
 import type { Procedure } from './procedure.ts';
 import type { ClientToServerPayload, Router, ServerToClientPayload } from './router.ts';
 import type { Promisify } from './util.ts';
-import { isDefined } from '@petrhdk/util';
 
 type inferRoutes<$Router> =
   $Router extends Router<any, infer $Routes>
@@ -30,11 +29,11 @@ export function client<Router>(requestSender: RequestSender) {
     // temporary container for renaming the `apply` method of the proxy, so that error stack trace will be more helpful
     const tempContainer = {
       async [functionName](_target: any, _thisArg: any, argArray: any[]) {
-        const { output, error } = await requestSender({ keyPath, rawInput: argArray[0] });
-        if (isDefined(error)) {
-          throw new RpcServerError(`"${error}"`);
+        const response = await requestSender({ keyPath, rawInput: argArray[0] });
+        if ('error' in response) {
+          throw new RpcServerError(`"${response.error}"`);
         }
-        return output;
+        return response.output;
       },
     };
 
