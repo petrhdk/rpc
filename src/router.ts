@@ -59,7 +59,7 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
             output = await procedure.handler(parsedInput, context, serverContext); // may throw exception
           }
           catch (e) {
-            error = e;
+            error = String(e);
           }
           return { output, error };
         },
