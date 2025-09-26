@@ -12,8 +12,8 @@ export interface ClientToServerPayload {
 }
 
 export interface ServerToClientPayload {
-  output: unknown,
-  error: unknown,
+  output?: unknown,
+  error?: string,
 }
 
 export interface Router<ServerContext, Routes> {

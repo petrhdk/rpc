@@ -9,5 +9,11 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     outDir: 'dist/',
+    minify: 'terser',
+    terserOptions: {
+      mangle: {
+        reserved: ['RpcServerError'],
+      },
+    },
   },
 });
