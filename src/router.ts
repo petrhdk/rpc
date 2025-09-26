@@ -36,7 +36,7 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
             let target: any = this.routes;
             while (keyPath.length) {
               // security measure against code injection
-              if (!Object.getOwnPropertyNames(target).includes(target)) {
+              if (!Object.getOwnPropertyNames(target).includes(keyPath[0])) {
                 throw new Error('There is no procedure at the given path');
               }
               // traverse
