@@ -1,3 +1,7 @@
-export * from './client.ts';
-export * from './procedure.ts';
-export * from './router.ts';
+import * as all from './_exports.ts';
+
+// default export
+export default all;
+
+// named exports
+export * from './_exports.ts';
