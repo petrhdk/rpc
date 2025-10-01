@@ -35,16 +35,20 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
         async invokeRoute(clientToServerPayload, serverContext) {
           // validate payload
           const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
+
+          // try to run procedure
           let output, error;
+
           try {
             // find procedure
             let target: any = this.routes;
             while (keyPath.length) {
-              // security measure against code injection
+              // security measure against code injection via prototype chain
               if (!Object.getOwnPropertyNames(target).includes(keyPath[0])) {
                 throw new Error('There is no procedure at the given path');
               }
-              // traverse
+
+              // traverse routes
               target = target[keyPath.shift()!]; // may throw exception
             }
             const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
@@ -55,7 +59,7 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
               context = await middleware(context, serverContext); // may throw exception
             }
 
-            // run procedure inputValidator (using `zod`)
+            // run procedure inputValidator (using zod)
             const parsedInput = isDefined(procedure.inputValidator)
               ? procedure.inputValidator.parse(rawInput) // may throw exception
               : rawInput;
@@ -66,6 +70,8 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
           catch (e) {
             error = String(e);
           }
+
+          // send procedure results
           return { output, error };
         },
       };
