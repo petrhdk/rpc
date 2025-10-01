@@ -33,13 +33,11 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
         routes,
 
         async invokeRoute(clientToServerPayload, serverContext) {
-          // validate payload
-          const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
-
-          // try to run procedure
           let output, error;
-
           try {
+            // validate payload
+            const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
+
             // find procedure
             let target: any = this.routes;
             while (keyPath.length) {
