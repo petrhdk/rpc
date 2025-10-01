@@ -1,15 +1,17 @@
 import type { Procedure } from './procedure.ts';
 import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
+import { z } from 'zod';
 
 interface RouterUndefined<ServerContext> {
   routes: <Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(routes: Routes) => Router<ServerContext, Routes>,
 }
 
-export interface ClientToServerPayload {
-  keyPath: string[],
-  rawInput: unknown,
-}
+const clientToServerPayloadSchema = z.object({
+  keyPath: z.array(z.string()),
+  rawInput: z.unknown(),
+});
+export type ClientToServerPayload = z.infer<typeof clientToServerPayloadSchema>;
 
 export type ServerToClientPayload = {
   output: unknown,
@@ -30,7 +32,9 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
       return { // Router
         routes,
 
-        async invokeRoute({ keyPath, rawInput }, serverContext) {
+        async invokeRoute(clientToServerPayload, serverContext) {
+          // validate payload
+          const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
           let output, error;
           try {
             // find procedure
