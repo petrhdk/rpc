@@ -4,7 +4,10 @@
 
 <br><br>
 
-# Developer info
+# Code documentation
 
 ## Query builder
 + ![](docs/procedures.drawio.svg)
+
+## Server builder
++ ![](docs/server-builder.drawio.svg)

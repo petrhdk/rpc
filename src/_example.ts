@@ -15,7 +15,7 @@ const p = rpc.procedure<MyServerContext>()
     return 123;
   });
 
-const server = rpc.server<MyServerContext>().routes({
+const server = rpc.server.context<MyServerContext>().routes({
   call: {
     me: {
       maybe: p,
