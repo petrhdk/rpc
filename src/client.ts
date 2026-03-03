@@ -14,15 +14,17 @@ type inferClient<$Routes> = {
     : inferClient<$Routes[$K]>;
 };
 
-type RequestSender = (_: ClientToServerPayload) => Promise<ServerToClientPayload>;
-
 function getDummy() { // TODO: test if dummy can be shared by all proxies
   return () => {};
 }
 
 class RpcServerError extends Error {};
 
-export function client<Router>(requestSender: RequestSender) {
+type ClientRequestSender = (
+  clientToServerPayload: ClientToServerPayload
+) => Promise<ServerToClientPayload>;
+
+export function client<Router>(requestSender: ClientRequestSender) {
   function createProxy(keyPath: string[]) {
     const functionName = keyPath.length ? keyPath.at(-1)! : 'rpcClient';
 
