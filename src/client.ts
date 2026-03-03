@@ -2,11 +2,15 @@ import type { Procedure } from './procedure.ts';
 import type { ClientToServerPayload, Router, ServerToClientPayload } from './router.ts';
 import type { Promisify } from './util.ts';
 
+// type function to extract the second template parameter
+// from a given 'Router' type
 type inferRoutes<$Router> =
   $Router extends Router<any, infer $Routes>
     ? $Routes
     : never;
 
+// recursive type function that generates a nested dictionary type based off
+// the nested routes dictionary from the router
 type inferClient<$Routes> = {
   [$K in keyof $Routes]:
   $Routes[$K] extends Procedure<any, any, infer $Input, infer $Output>
