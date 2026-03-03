@@ -16,24 +16,34 @@ type inferClient<$Routes> = {
 
 function proxyTargetDummy() {}
 
-class RpcServerError extends Error {};
-
 type ClientRequestSender = (
   clientToServerPayload: ClientToServerPayload
 ) => Promise<ServerToClientPayload>;
 
 export function client<Router>(requestSender: ClientRequestSender) {
-  function createProxy(path: string[]) {
-    const functionName = path.length ? path.at(-1)! : 'rpcClient';
+  return createProxy([]) as any as inferClient<inferRoutes<Router>>;
 
-    // temporary container for renaming the `apply` method of the proxy, so that error stack trace will be more helpful
+  function createProxy(currentPath: string[]) {
+    const functionName = currentPath.length ? currentPath.at(-1)! : 'rpcClient';
+
+    // temporary container for assigning a name to the `apply` method of the proxy
+    // (so that error stack traces will show the correct function name)
     const tempContainer = {
+      // becomes the `apply` function for the Proxy created below
       async [functionName](_target: any, _thisArg: any, argArray: any[]) {
-        const response = await requestSender({ path, input: argArray[0] });
-        if ('error' in response) {
-          throw new RpcServerError(`"${response.error}"`);
+        // communicate with the server via the function configured by the library user
+        const clientToServerPayload = {
+          path: currentPath,
+          input: argArray[0],
+        };
+        const serverToClientPayload = await requestSender(clientToServerPayload);
+        if ('error' in serverToClientPayload) {
+          // re-create the server exception on the client.
+          // the custom Error class creates a more beautiful entry in the console
+          class RpcServerError extends Error {};
+          throw new RpcServerError(`"${serverToClientPayload.error}"`);
         }
-        return response.output;
+        return serverToClientPayload.output;
       },
     };
 
@@ -43,10 +53,8 @@ export function client<Router>(requestSender: ClientRequestSender) {
 
       // when a property is accessed on the proxy
       get(_, key: string) {
-        return createProxy([...path, key]);
+        return createProxy([...currentPath, key]);
       },
     });
   }
-
-  return createProxy([]) as any as inferClient<inferRoutes<Router>>;
 }
