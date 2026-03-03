@@ -8,7 +8,7 @@ interface RouterUndefined<ServerContext> {
 }
 
 const clientToServerPayloadSchema = z.object({
-  keyPath: z.array(z.string()),
+  path: z.array(z.string()),
   rawInput: z.unknown(),
 });
 export type ClientToServerPayload = z.infer<typeof clientToServerPayloadSchema>;
@@ -41,18 +41,18 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
           //   - if an exception is thrown, this function will only return `{ error }`
           try {
             // validate payload
-            const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
+            const { path, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
 
-            // find the procedure represented by `keyPath`
+            // find the procedure represented by `path`
             // (by traversing into the routes, starting at the top-level dictionary)
             let target: any = this.routes;
-            while (keyPath.length) {
+            while (path.length) {
               // security measure against code injection via prototype chain
-              if (!Object.hasOwn(target, keyPath[0])) {
-                throw new Error('There is no procedure at the given keyPath');
+              if (!Object.hasOwn(target, path[0])) {
+                throw new Error('There is no procedure at the given path');
               }
               // traverse routes
-              target = target[keyPath.shift()!];
+              target = target[path.shift()!];
             }
             const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
 

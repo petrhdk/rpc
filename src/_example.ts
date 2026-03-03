@@ -28,7 +28,7 @@ export type Router = typeof router;
 // ...
 router.invokeRoute(
   {
-    keyPath: ['call', 'me', 'maybe'],
+    path: ['call', 'me', 'maybe'],
     rawInput: 'asdf',
   },
   { user: 'ye' },
