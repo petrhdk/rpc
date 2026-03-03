@@ -14,9 +14,7 @@ type inferClient<$Routes> = {
     : inferClient<$Routes[$K]>;
 };
 
-function getDummy() { // TODO: test if dummy can be shared by all proxies
-  return () => {};
-}
+function proxyTargetDummy() {}
 
 class RpcServerError extends Error {};
 
@@ -39,8 +37,7 @@ export function client<Router>(requestSender: ClientRequestSender) {
       },
     };
 
-    return new Proxy(getDummy(), {
-
+    return new Proxy(proxyTargetDummy, {
       // when the proxy is used as a function
       apply: tempContainer[functionName],
 
