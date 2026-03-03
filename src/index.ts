@@ -1,7 +1,4 @@
-import * as all from './_exports.ts';
-
-// default export
-export default all;
-
-// named exports
-export * from './_exports.ts';
+export { client } from './client.ts';
+export { procedure } from './procedure.ts';
+export { router } from './router.ts';
+export type { ClientToServerPayload, ServerToClientPayload } from './router.ts';
