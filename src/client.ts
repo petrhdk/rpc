@@ -1,16 +1,16 @@
 import type { Procedure } from './procedure.ts';
-import type { ClientToServerPayload, Router, ServerToClientPayload } from './router.ts';
+import type { ClientToServerPayload, Server, ServerToClientPayload } from './server.ts';
 import type { Promisify } from './util.ts';
 
 // type function to extract the second template parameter
-// from a given 'Router' type
-type inferRoutes<$Router> =
-  $Router extends Router<any, infer $Routes>
+// from a given 'Server' type
+type inferRoutes<$Server> =
+  $Server extends Server<any, infer $Routes>
     ? $Routes
     : never;
 
 // recursive type function that generates a nested dictionary type based off
-// the nested routes dictionary from the router
+// the nested routes dictionary from the server
 type inferClient<$Routes> = {
   [$K in keyof $Routes]:
   $Routes[$K] extends Procedure<any, any, infer $Input, infer $Output>
@@ -24,8 +24,8 @@ type ClientRequestSender = (
   clientToServerPayload: ClientToServerPayload
 ) => Promise<ServerToClientPayload>;
 
-export function createClient<Router>(requestSender: ClientRequestSender) {
-  return createProxy([]) as any as inferClient<inferRoutes<Router>>;
+export function createClient<Server>(requestSender: ClientRequestSender) {
+  return createProxy([]) as any as inferClient<inferRoutes<Server>>;
 
   function createProxy(currentPath: string[]) {
     const functionName = currentPath.length ? currentPath.at(-1)! : 'rpcClient';

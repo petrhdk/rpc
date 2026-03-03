@@ -3,8 +3,8 @@ import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 import { z } from 'zod';
 
-interface RouterUndefined<ServerContext> {
-  routes: <Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(routes: Routes) => Router<ServerContext, Routes>,
+interface ServerUndefined<ServerContext> {
+  routes: <Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(routes: Routes) => Server<ServerContext, Routes>,
 }
 
 const clientToServerPayloadSchema = z.object({
@@ -19,17 +19,17 @@ export type ServerToClientPayload = {
   error: string,
 };
 
-export interface Router<ServerContext, Routes> {
+export interface Server<ServerContext, Routes> {
   /** @internal */
   routes: Routes,
 
   invokeRoute: (_: ClientToServerPayload, serverContext: ServerContext) => Promise<ServerToClientPayload>,
 }
 
-export function router<ServerContext = undefined>(): RouterUndefined<ServerContext> {
-  return { // RouterUndefined
+export function server<ServerContext = undefined>(): ServerUndefined<ServerContext> {
+  return { // ServerUndefined
     routes(routes) {
-      return { // Router
+      return { // Server
         routes,
 
         async invokeRoute(clientToServerPayload, serverContext) {
