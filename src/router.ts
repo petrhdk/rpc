@@ -33,21 +33,26 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
         routes,
 
         async invokeRoute(clientToServerPayload, serverContext) {
-          let output, error;
+          let output: unknown | undefined;
+          let error: string | undefined;
+
+          // try to invoke the route
+          //   - if no exception is thrown, this function will only return `{ output }`
+          //   - if an exception is thrown, this function will only return `{ error }`
           try {
             // validate payload
             const { keyPath, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
 
-            // find procedure
+            // find the procedure represented by `keyPath`
+            // (by traversing into the routes, starting at the top-level dictionary)
             let target: any = this.routes;
             while (keyPath.length) {
               // security measure against code injection via prototype chain
-              if (!Object.getOwnPropertyNames(target).includes(keyPath[0])) {
-                throw new Error('There is no procedure at the given path');
+              if (!Object.hasOwn(target, keyPath[0])) {
+                throw new Error('There is no procedure at the given keyPath');
               }
-
               // traverse routes
-              target = target[keyPath.shift()!]; // may throw exception
+              target = target[keyPath.shift()!];
             }
             const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
 
@@ -69,8 +74,10 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
             error = String(e);
           }
 
-          // send procedure results
-          return { output, error };
+          // response (ServerToClientPayload)
+          return (error !== undefined)
+            ? { error }
+            : { output };
         },
       };
     },
