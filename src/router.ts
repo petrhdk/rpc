@@ -9,7 +9,7 @@ interface RouterUndefined<ServerContext> {
 
 const clientToServerPayloadSchema = z.object({
   path: z.array(z.string()),
-  rawInput: z.unknown(),
+  input: z.unknown(),
 });
 export type ClientToServerPayload = z.infer<typeof clientToServerPayloadSchema>;
 
@@ -41,7 +41,7 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
           //   - if an exception is thrown, this function will only return `{ error }`
           try {
             // validate payload
-            const { path, rawInput } = clientToServerPayloadSchema.parse(clientToServerPayload);
+            const { path, input } = clientToServerPayloadSchema.parse(clientToServerPayload);
 
             // find the procedure represented by `path`
             // (by traversing into the routes, starting at the top-level dictionary)
@@ -64,8 +64,8 @@ export function router<ServerContext = undefined>(): RouterUndefined<ServerConte
 
             // run procedure inputValidator (using zod)
             const parsedInput = isDefined(procedure.inputValidator)
-              ? procedure.inputValidator.parse(rawInput) // may throw exception
-              : rawInput;
+              ? procedure.inputValidator.parse(input) // may throw exception
+              : input;
 
             // invoke procedure handler
             output = await procedure.handler(parsedInput, context, serverContext); // may throw exception

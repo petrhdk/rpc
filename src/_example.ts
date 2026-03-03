@@ -29,7 +29,7 @@ export type Router = typeof router;
 router.invokeRoute(
   {
     path: ['call', 'me', 'maybe'],
-    rawInput: 'asdf',
+    input: 'asdf',
   },
   { user: 'ye' },
 );

@@ -29,7 +29,7 @@ export function client<Router>(requestSender: ClientRequestSender) {
     // temporary container for renaming the `apply` method of the proxy, so that error stack trace will be more helpful
     const tempContainer = {
       async [functionName](_target: any, _thisArg: any, argArray: any[]) {
-        const response = await requestSender({ path, rawInput: argArray[0] });
+        const response = await requestSender({ path, input: argArray[0] });
         if ('error' in response) {
           throw new RpcServerError(`"${response.error}"`);
         }
