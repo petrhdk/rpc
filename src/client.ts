@@ -20,7 +20,7 @@ type ClientRequestSender = (
   clientToServerPayload: ClientToServerPayload
 ) => Promise<ServerToClientPayload>;
 
-export function client<Router>(requestSender: ClientRequestSender) {
+export function createClient<Router>(requestSender: ClientRequestSender) {
   return createProxy([]) as any as inferClient<inferRoutes<Router>>;
 
   function createProxy(currentPath: string[]) {
