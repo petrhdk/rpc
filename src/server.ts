@@ -24,7 +24,7 @@ export interface Server<ServerContext, Routes> {
   /** @internal */
   routes: Routes,
 
-  invokeRoute: (_: ClientToServerPayload, serverContext: ServerContext) => Promise<ServerToClientPayload>,
+  invokeRoute: (clientToServerPayload: ClientToServerPayload, serverContext: ServerContext) => Promise<ServerToClientPayload>,
 }
 
 export const server: ServerEmpty = {
