@@ -36,7 +36,7 @@ export interface Procedure<ServerContext, Context, Input, Output>
   /**
    * [internal type identifier] — not a property that will actually be assigned any value to
    */
-  $type?: 'Procedure', // this is necessary to differentiate this type from other types with the same signature, `{}`, which this interface has after stripping the properties marked with @internal, as is happens when typescript generates the .d.ts type declarations. so, without this identifier, any value would pass the test `value extends Procedure` in a user's application code, which is not what we want.
+  $type?: 'Procedure', // this is necessary in order to differentiate this type from other types with the same signature: the type of this interface is `{}` after stripping the properties marked with @internal, which always happens when typescript generates the .d.ts type declarations. so, without this internal type identifier, any value would pass the test `value extends Procedure` in a user's application code, which is not what we want.
 }
 
 export function procedure<ServerContext = undefined>(): ProcedureEmpty<ServerContext, undefined, void> {
