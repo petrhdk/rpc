@@ -3,6 +3,8 @@ import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 import { z } from 'zod';
 
+// [types]: util types
+// ---------------------------------------------------------
 const clientToServerPayloadSchema = z.object({
   path: z.array(z.string()),
   input: z.unknown(),
@@ -15,45 +17,54 @@ export type ServerToClientPayload = {
   error: string,
 };
 
-interface ServerEmpty<ServerContext = undefined> {
-  context: <NewServerContext>() => ServerEmpty<NewServerContext>,
-  routes: <Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(routes: Routes) => Server<ServerContext, Routes>,
+// [types]: server stages
+// ---------------------------------------------------------
+interface ServerEmpty<InitialContext> {
+  initialContext: <NewInitialContext>() => ServerEmpty<NewInitialContext>,
+  routes: <Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(routes: Routes) => Server<InitialContext, Routes>,
 }
 
-export interface Server<ServerContext, Routes> {
+export interface Server<InitialContext, Routes> {
   /** @internal */
   routes: Routes,
 
-  invokeRoute: (clientToServerPayload: ClientToServerPayload, serverContext: ServerContext) => Promise<ServerToClientPayload>,
+  invokeRoute: (clientToServerPayload: ClientToServerPayload, initialContext: InitialContext) => Promise<ServerToClientPayload>,
 }
 
-export const server: ServerEmpty = {
-  context() {
-    return addContext(this);
+// [implementation]: empty server (starting point)
+// ---------------------------------------------------------
+export const server: ServerEmpty<undefined> = {
+  initialContext<InitialContext>() {
+    return ServerEmpty_initialContext<InitialContext>();
   },
   routes(routes) {
-    return addRoutes(this, routes);
+    return ServerEmpty_routes(this, routes);
   },
 };
 
-function addContext<OldServerContext, NewServerContext>(_oldServer: ServerEmpty<OldServerContext>): ServerEmpty<NewServerContext> {
+// [implementation]: stage transitions
+// ---------------------------------------------------------
+function ServerEmpty_initialContext<InitialContext>(): ServerEmpty<InitialContext> {
   return {
-    context() {
-      return addContext(this);
+    initialContext<NewInitialContext>() {
+      return ServerEmpty_initialContext<NewInitialContext>();
     },
     routes(routes) {
-      return addRoutes(this, routes);
+      return ServerEmpty_routes(this, routes);
     },
   };
 }
 
-function addRoutes<ServerContext, Routes extends RecursiveDictionary<Procedure<ServerContext, any, any, any>>>(
-  _oldServer: ServerEmpty<ServerContext>,
+function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(
+  _oldServer: ServerEmpty<InitialContext>,
   routes: Routes,
-): Server<ServerContext, Routes> {
+): Server<InitialContext, Routes> {
   return {
+    // the server's private property holding the procedure definitions
     routes,
-    async invokeRoute(clientToServerPayload, serverContext) {
+
+    // the server's public method for invoking a route/procedure
+    async invokeRoute(clientToServerPayload, initialContext) {
       let output: unknown | undefined;
       let error: string | undefined;
 
@@ -78,18 +89,18 @@ function addRoutes<ServerContext, Routes extends RecursiveDictionary<Procedure<S
         const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
 
         // run procedure middleware
-        let context;
+        let context = initialContext;
         for (const middleware of procedure.middlewares) {
-          context = await middleware(context, serverContext); // may throw exception
+          context = await middleware(context); // may throw exception
         }
 
         // run procedure inputValidator (using zod)
-        const parsedInput = isDefined(procedure.inputValidator)
-          ? procedure.inputValidator.parse(input) // may throw exception
+        const parsedInput = isDefined(procedure.inputSchema)
+          ? procedure.inputSchema.parse(input) // may throw exception
           : input;
 
         // invoke procedure handler
-        output = await procedure.handler(parsedInput, context, serverContext); // may throw exception
+        output = await procedure.handler(parsedInput, context); // may throw exception
       }
       catch (e) {
         error = String(e);

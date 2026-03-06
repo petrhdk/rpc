@@ -1,87 +1,243 @@
 import type { MaybePromise } from './util.ts';
 import { z } from 'zod';
 
-type Middleware<ServerContext, Context, NewContext> =
-  (context: Context, serverContext: ServerContext) => MaybePromise<NewContext>;
+// [types]: util types
+// ---------------------------------------------------------
+type Middleware<OldContext, NewContext> =
+  (context: OldContext) => MaybePromise<NewContext>;
 
-type Handler<ServerContext, Context, Input, Output> =
-  (input: Input, context: Context, serverContext: ServerContext) => MaybePromise<Output>;
+type Handler<FinalContext, Input, Output> =
+  (input: Input, context: FinalContext) => MaybePromise<Output>;
 
-// based on `zod`
-interface InputValidator<Input> {
-  parse: (rawInput: unknown) => Input,
+interface InputSchema<Input> {
+  parse: (rawInput: unknown) => Input, // based on `zod` schemas
 }
 
-interface ProcedureEmpty<
-  ServerContext,
-  Context,
-  Input,
-> {
-  /** @internal */
-  middlewares: Middleware<ServerContext, any, any>[],
-  /** @internal */
-  inputValidator: InputValidator<Input>,
+// [types]: procedure stages
+// ---------------------------------------------------------
+interface ProcedureEmpty {
+  initialContext: <InitialContext>() => ProcedureWithInitialContext<InitialContext>,
+  use: <FinalContext>(middleware: Middleware<unknown, FinalContext>) => ProcedureWithMiddleware<unknown, FinalContext>,
+  input: <Input>(inputSchema: InputSchema<Input>) => ProcedureWithInputSchema<unknown, unknown, Input>,
+  define: <Output>(handler: Handler<unknown, void, Output>) => Procedure<unknown, unknown, void, Output>,
+};
 
-  use: <NewContext>(middleware: Middleware<ServerContext, Context, NewContext>) => ProcedureEmpty<ServerContext, NewContext, Input>,
-  input: <NewInput>(inputValidator: InputValidator<NewInput>) => ProcedureEmpty<ServerContext, Context, NewInput>,
-  define: <NewOutput>(handler: Handler<ServerContext, Context, Input, NewOutput>) => Procedure<ServerContext, Context, Input, NewOutput>,
-}
+interface ProcedureWithInitialContext<InitialContext> {
+  use: <FinalContext>(middleware: Middleware<InitialContext, FinalContext>) => ProcedureWithMiddleware<InitialContext, FinalContext>,
+  input: <Input>(inputSchema: InputSchema<Input>) => ProcedureWithInputSchema<InitialContext, InitialContext, Input>,
+  define: <Output>(handler: Handler<InitialContext, void, Output>) => Procedure<InitialContext, InitialContext, void, Output>,
+};
 
-export interface Procedure<ServerContext, Context, Input, Output>
-  extends Omit<ProcedureEmpty<ServerContext, Context, Input>, 'use' | 'input' | 'define'> {
+interface ProcedureWithMiddleware<InitialContext, FinalContext> {
+  /** @internal */
+  middlewares:
+    | [Middleware<InitialContext, FinalContext>]
+    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
+
+  use: <NewFinalContext>(middleware: Middleware<FinalContext, NewFinalContext>) => ProcedureWithMiddleware<InitialContext, NewFinalContext>,
+  input: <Input>(inputSchema: InputSchema<Input>) => ProcedureWithInputSchema<InitialContext, FinalContext, Input>,
+  define: <Output>(handler: Handler<FinalContext, void, Output>) => Procedure<InitialContext, FinalContext, void, Output>,
+};
+
+interface ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
+  /** @internal */
+  middlewares:
+    | []
+    | [Middleware<InitialContext, FinalContext>]
+    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
 
   /** @internal */
-  handler: Handler<ServerContext, Context, Input, Output>,
+  inputSchema: InputSchema<Input>,
+
+  define: <Output>(handler: Handler<FinalContext, Input, Output>) => Procedure<InitialContext, FinalContext, Input, Output>,
+};
+
+export interface Procedure<InitialContext, FinalContext, Input, Output> {
+  /** @internal */
+  middlewares:
+    | []
+    | [Middleware<InitialContext, FinalContext>]
+    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
+
+  /** @internal */
+  inputSchema: InputSchema<Input>,
+
+  /** @internal */
+  handler: Handler<FinalContext, Input, Output>,
 
   /**
-   * [internal type identifier] — not a property that will actually be assigned any value to
+   * [internal type discriminator]
    */
-  $type?: 'Procedure', // this is necessary in order to differentiate this type from other types with the same signature: the type of this interface is `{}` after stripping the properties marked with @internal, which always happens when typescript generates the .d.ts type declarations. so, without this internal type identifier, any value would pass the test `value extends Procedure` in a user's application code, which is not what we want.
-}
+  $type?: 'Procedure', // this value is never actually assigned, but we declare it (as optional) in this type interface so that typescript will not interpret this interface as type `{}` after stripping all properties marked as `@internal` (as it happens when building the library .d.ts files) - because this would mean that in a user's application code ANY value passes the test `value extends Procedure`, which is not what we want.
+};
 
-export function procedure<ServerContext = undefined>(): ProcedureEmpty<ServerContext, undefined, void> {
+// [implementation]: empty procedure (starting point)
+// ---------------------------------------------------------
+export const procedure: ProcedureEmpty = {
+  initialContext<InitialContext>() {
+    return ProcedureEmpty_initialContext<InitialContext>();
+  },
+  use(middleware) {
+    return ProcedureEmpty_use(middleware);
+  },
+  input(inputSchema) {
+    return ProcedureEmpty_input(inputSchema);
+  },
+  define(handler) {
+    return ProcedureEmpty_define(handler);
+  },
+};
+
+// [implementation]: stage transitions
+// ---------------------------------------------------------
+function ProcedureEmpty_initialContext<InitialContext>(): ProcedureWithInitialContext<InitialContext> {
   return {
-    middlewares: [],
-    inputValidator: z.void(),
     use(middleware) {
-      return addMiddleware(this, middleware);
+      return ProcedureWithInitialContext_use(this, middleware);
     },
-    input(inputValidator) {
-      return addInputValidator(this, inputValidator);
+    input(inputSchema) {
+      return ProcedureWithInitialContext_input(this, inputSchema);
     },
     define(handler) {
-      return addHandler(this, handler);
+      return ProcedureWithInitialContext_define(this, handler);
     },
   };
 }
 
-function addMiddleware<ServerContext, OldContext, NewContext, Input>(
-  oldProcedure: ProcedureEmpty<ServerContext, OldContext, Input>,
-  middleware: Middleware<ServerContext, OldContext, NewContext>,
-): ProcedureEmpty<ServerContext, NewContext, Input> {
+function ProcedureEmpty_use<NewFinalContext>(
+  middleware: Middleware<unknown, NewFinalContext>,
+): ProcedureWithMiddleware<unknown, NewFinalContext> {
   return {
-    ...oldProcedure,
-    middlewares: [...oldProcedure.middlewares, middleware],
-  } as unknown as ProcedureEmpty<ServerContext, NewContext, Input>;
-}
+    middlewares: [middleware],
 
-function addInputValidator<ServerContext, Context, NewInput>(
-  oldProcedure: ProcedureEmpty<ServerContext, Context, any>,
-  inputValidator: InputValidator<NewInput>,
-): ProcedureEmpty<ServerContext, Context, NewInput> {
-  return {
-    ...oldProcedure,
-    inputValidator,
+    use(middleware) {
+      return ProcedureWithMiddleware_use(this, middleware);
+    },
+    input(inputSchema) {
+      return ProcedureWithMiddleware_input(this, inputSchema);
+    },
+    define(handler) {
+      return ProcedureWithMiddleware_define(this, handler);
+    },
   };
 }
 
-function addHandler<ServerContext, Context, Input, Output>(
-  oldProcedure: ProcedureEmpty<ServerContext, Context, Input>,
-  handler: Handler<ServerContext, Context, Input, Output>,
-): Procedure<ServerContext, Context, Input, Output> {
+function ProcedureEmpty_input<Input>(
+  inputSchema: InputSchema<Input>,
+): ProcedureWithInputSchema<unknown, unknown, Input> {
+  return {
+    middlewares: [],
+    inputSchema,
+
+    define(handler) {
+      return ProcedureWithInputSchema_define(this, handler);
+    },
+  };
+}
+
+function ProcedureEmpty_define<Output>(
+  handler: Handler<unknown, void, Output>,
+): Procedure<unknown, unknown, void, Output> {
+  return {
+    middlewares: [],
+    inputSchema: z.void(),
+    handler,
+  };
+}
+
+function ProcedureWithInitialContext_use<InitialContext, FinalContext>(
+  _oldProcedure: ProcedureWithInitialContext<InitialContext>,
+  middleware: Middleware<InitialContext, FinalContext>,
+): ProcedureWithMiddleware<InitialContext, FinalContext> {
+  return {
+    middlewares: [middleware],
+    use(middleware) {
+      return ProcedureWithMiddleware_use(this, middleware);
+    },
+    input(inputSchema) {
+      return ProcedureWithMiddleware_input(this, inputSchema);
+    },
+    define(handler) {
+      return ProcedureWithMiddleware_define(this, handler);
+    },
+  };
+}
+
+function ProcedureWithInitialContext_input<InitialContext, Input>(
+  _oldProcedure: ProcedureWithInitialContext<InitialContext>,
+  inputSchema: InputSchema<Input>,
+): ProcedureWithInputSchema<InitialContext, InitialContext, Input> {
+  return {
+    middlewares: [],
+    inputSchema,
+    define(handler) {
+      return ProcedureWithInputSchema_define(this, handler);
+    },
+  };
+}
+
+function ProcedureWithInitialContext_define<InitialContext, Output>(
+  _oldProcedure: ProcedureWithInitialContext<InitialContext>,
+  handler: Handler<InitialContext, void, Output>,
+): Procedure<InitialContext, InitialContext, void, Output> {
+  return {
+    middlewares: [],
+    inputSchema: z.void(),
+    handler,
+  };
+}
+
+function ProcedureWithMiddleware_use<InitialContext, OldFinalContext, NewFinalContext>(
+  oldProcedure: ProcedureWithMiddleware<InitialContext, OldFinalContext>,
+  middleware: Middleware<OldFinalContext, NewFinalContext>,
+): ProcedureWithMiddleware<InitialContext, NewFinalContext> {
+  return {
+    middlewares: [...oldProcedure.middlewares, middleware],
+
+    use(middleware) {
+      return ProcedureWithMiddleware_use(this, middleware);
+    },
+    input(inputSchema) {
+      return ProcedureWithMiddleware_input(this, inputSchema);
+    },
+    define(handler) {
+      return ProcedureWithMiddleware_define(this, handler);
+    },
+  };
+}
+
+function ProcedureWithMiddleware_input<InitialContext, FinalContext, Input>(
+  oldProcedure: ProcedureWithMiddleware<InitialContext, FinalContext>,
+  inputSchema: InputSchema<Input>,
+): ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
   return {
     middlewares: oldProcedure.middlewares,
-    inputValidator: oldProcedure.inputValidator,
+    inputSchema,
+
+    define(handler) {
+      return ProcedureWithInputSchema_define(this, handler);
+    },
+  };
+}
+
+function ProcedureWithMiddleware_define<InitialContext, FinalContext, Output>(
+  oldProcedure: ProcedureWithMiddleware<InitialContext, FinalContext>,
+  handler: Handler<FinalContext, void, Output>,
+): Procedure<InitialContext, FinalContext, void, Output> {
+  return {
+    middlewares: oldProcedure.middlewares,
+    inputSchema: z.void(),
+    handler,
+  };
+}
+
+function ProcedureWithInputSchema_define<InitialContext, FinalContext, Input, Output>(
+  oldProcedure: ProcedureWithInputSchema<InitialContext, FinalContext, Input>,
+  handler: Handler<FinalContext, Input, Output>,
+): Procedure<InitialContext, FinalContext, Input, Output> {
+  return {
+    middlewares: oldProcedure.middlewares,
+    inputSchema: oldProcedure.inputSchema,
     handler,
   };
 }

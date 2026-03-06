@@ -6,8 +6,8 @@ interface MyServerContext {
   user: string,
 }
 
-const p = rpc.procedure<MyServerContext>()
-  .use((_, { user }) => ({ user, abc: 123 }))
+const p = rpc.procedure.initialContext<MyServerContext>()
+  .use(({ user }) => ({ user, abc: 123 }))
   .use((previousContext) => ({ ...previousContext, xyz: 456 }))
   .input(z.string())
   .define((input: string, context) => {
@@ -15,7 +15,7 @@ const p = rpc.procedure<MyServerContext>()
     return 123;
   });
 
-const server = rpc.server.context<MyServerContext>().routes({
+const server = rpc.server.initialContext<MyServerContext>().routes({
   call: {
     me: {
       maybe: p,
