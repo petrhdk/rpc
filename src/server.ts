@@ -1,3 +1,8 @@
+/**
+ * Hint:
+ *  - See README.md to understand the conceptual design of the server builder.
+ */
+
 import type { Procedure } from './procedure.ts';
 import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';

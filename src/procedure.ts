@@ -1,3 +1,8 @@
+/**
+ * Hint:
+ *  - See README.md to understand the conceptual design of the procedure builder.
+ */
+
 import type { MaybePromise } from './util.ts';
 import { z } from 'zod';
 
