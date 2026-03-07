@@ -1,12 +1,19 @@
 import type { ServerToClientPayload } from './index.ts';
+import { Buffer } from 'node:buffer';
+import * as http from 'node:http';
 import { z } from 'zod';
 import * as rpc from './index.ts';
 
+// declare type utils
+// ---------------------------------------------------------
 interface MyServerContext {
   user: string,
 }
 
-const p = rpc.procedure.initialContext<MyServerContext>()
+// define routes/procedures
+// ---------------------------------------------------------
+const procedure = rpc.procedure
+  .initialContext<MyServerContext>()
   .use(({ user }) => ({ user, abc: 123 }))
   .use((previousContext) => ({ ...previousContext, xyz: 456 }))
   .input(z.string())
@@ -15,17 +22,19 @@ const p = rpc.procedure.initialContext<MyServerContext>()
     return 123;
   });
 
-const server = rpc.server.initialContext<MyServerContext>().routes({
-  call: {
-    me: {
-      maybe: p,
+const server = rpc.server
+  .initialContext<MyServerContext>()
+  .routes({
+    call: {
+      me: {
+        maybe: procedure,
+      },
     },
-  },
-});
+  });
 export type MyServer = typeof server;
 
-// set up your HTTP server (or similar).
-// ...
+// test route invocation
+// ---------------------------------------------------------
 server.invokeRoute(
   {
     path: ['call', 'me', 'maybe'],
@@ -34,9 +43,45 @@ server.invokeRoute(
   { user: 'ye' },
 );
 
-const client = rpc.createClient<MyServer>(async (_clientToServerPayload) => {
-  // send to server
-  const response: ServerToClientPayload = await /* ... */ { output: 123, error: undefined };
-  return response;
+// create HTTP server (which forwards to RPC server)
+// ---------------------------------------------------------
+http.createServer(async (request, response) => {
+  if (request.method === 'POST' && request.url!.startsWith('/rpc/')) {
+    const serverToClientPayload = await server.invokeRoute(
+      {
+        path: request.url!.replace(/^\/rpc\//, '').split('/'),
+        input: JSON.parse(await readBodyAsString(request)),
+      },
+      { user: 'ye' },
+    );
+    response.writeHead(200);
+    response.end(JSON.stringify(serverToClientPayload));
+  }
+}).listen(3000);
+
+// create RPC client (which talks to server via HTTP)
+// ---------------------------------------------------------
+const client = rpc.createClient<MyServer>(async (clientToServerPayload) => {
+  const httpResponse = await fetch(
+    `https://example.com/rpc/${clientToServerPayload.path.join('/')}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(clientToServerPayload.input),
+    },
+  );
+  return await httpResponse.json() as ServerToClientPayload;
 });
+
+// test the client
+// ---------------------------------------------------------
 client.call.me.maybe('asdf');
+
+// utils
+// ---------------------------------------------------------
+async function readBodyAsString(request: http.IncomingMessage) {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString();
+}
