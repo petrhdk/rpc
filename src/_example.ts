@@ -30,7 +30,7 @@ const server = rpc.server
       },
     },
   });
-export type MyServer = typeof server;
+type MyServer = typeof server;
 
 // test route invocation
 // ---------------------------------------------------------
