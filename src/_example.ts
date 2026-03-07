@@ -1,4 +1,3 @@
-import type { ServerToClientPayload } from './index.ts';
 import { Buffer } from 'node:buffer';
 import * as http from 'node:http';
 import { z } from 'zod';
@@ -69,7 +68,7 @@ const client = rpc.createClient<MyServer>(async (clientToServerPayload) => {
       body: JSON.stringify(clientToServerPayload.input),
     },
   );
-  return await httpResponse.json() as ServerToClientPayload;
+  return await httpResponse.json() as rpc.ServerToClientPayload;
 });
 
 // test the client
