@@ -34,25 +34,21 @@ type MyServer = typeof server;
 
 // test route invocation
 // ---------------------------------------------------------
-server.invokeRoute(
-  {
-    path: ['call', 'me', 'maybe'],
-    input: 'asdf',
-  },
-  { user: 'ye' },
-);
+server.invokeRoute({
+  path: ['call', 'me', 'maybe'],
+  input: 'asdf',
+  initialContext: { user: 'ye' },
+});
 
 // create HTTP server (which forwards to RPC server)
 // ---------------------------------------------------------
 http.createServer(async (request, response) => {
   if (request.method === 'POST' && request.url!.startsWith('/rpc/')) {
-    const responsePayload = await server.invokeRoute(
-      {
-        path: request.url!.replace(/^\/rpc\//, '').split('/'),
-        input: JSON.parse(await readBodyAsString(request)),
-      },
-      { user: 'ye' },
-    );
+    const responsePayload = await server.invokeRoute({
+      path: request.url!.replace(/^\/rpc\//, '').split('/'),
+      input: JSON.parse(await readBodyAsString(request)),
+      initialContext: { user: 'ye' },
+    });
     response.writeHead(200);
     response.end(JSON.stringify(responsePayload));
   }

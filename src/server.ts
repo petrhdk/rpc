@@ -28,7 +28,7 @@ export interface Server<InitialContext, Routes> {
   /** @internal */
   routes: Routes,
 
-  invokeRoute: ({ path, input }: RequestPayload, initialContext: InitialContext) => Promise<ResponsePayload>,
+  invokeRoute: ({ path, input, initialContext }: { path: string[], input: unknown, initialContext: InitialContext }) => Promise<ResponsePayload>,
 }
 
 // [implementation]: empty server (starting point)
@@ -64,7 +64,7 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
     routes,
 
     // the server's public method for invoking a route/procedure
-    async invokeRoute({ path, input }, initialContext) {
+    async invokeRoute({ path, input, initialContext }) {
       let output: unknown | undefined;
       let error: string | undefined;
 
