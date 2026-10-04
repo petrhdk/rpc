@@ -60,12 +60,12 @@ http.createServer(async (request, response) => {
 
 // create RPC client (which talks to server via HTTP)
 // ---------------------------------------------------------
-const client = rpc.createClient<MyServer>(async (clientToServerPayload) => {
+const client = rpc.createClient<MyServer>(async ({ path, input }) => {
   const httpResponse = await fetch(
-    `https://example.com/rpc/${clientToServerPayload.path.join('/')}`,
+    `https://example.com/rpc/${path.join('/')}`,
     {
       method: 'POST',
-      body: JSON.stringify(clientToServerPayload.input),
+      body: JSON.stringify(input),
     },
   );
   return await httpResponse.json() as rpc.ServerToClientPayload;

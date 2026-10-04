@@ -10,11 +10,10 @@ import { z } from 'zod';
 
 // [types]: util types
 // ---------------------------------------------------------
-const clientToServerPayloadSchema = z.object({
-  path: z.array(z.string()),
-  input: z.unknown(),
-});
-export type ClientToServerPayload = z.infer<typeof clientToServerPayloadSchema>;
+export interface RequestPayload {
+  path: string[],
+  input: unknown,
+}
 
 export type ServerToClientPayload = {
   output: unknown,
@@ -33,7 +32,7 @@ export interface Server<InitialContext, Routes> {
   /** @internal */
   routes: Routes,
 
-  invokeRoute: (clientToServerPayload: ClientToServerPayload, initialContext: InitialContext) => Promise<ServerToClientPayload>,
+  invokeRoute: ({ path, input }: RequestPayload, initialContext: InitialContext) => Promise<ServerToClientPayload>,
 }
 
 // [implementation]: empty server (starting point)
@@ -69,7 +68,7 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
     routes,
 
     // the server's public method for invoking a route/procedure
-    async invokeRoute(clientToServerPayload, initialContext) {
+    async invokeRoute({ path, input }, initialContext) {
       let output: unknown | undefined;
       let error: string | undefined;
 
@@ -77,8 +76,8 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
       //   - if no exception is thrown, this function will only return `{ output }`
       //   - if an exception is thrown, this function will only return `{ error }`
       try {
-        // validate payload
-        const { path, input } = clientToServerPayloadSchema.parse(clientToServerPayload);
+        // validate `path`
+        path = z.array(z.string()).parse(path);
 
         // find the procedure represented by `path`
         // (by traversing into the routes, starting at the top-level dictionary)
