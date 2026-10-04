@@ -1,5 +1,5 @@
 import type { Procedure } from './procedure.ts';
-import type { RequestPayload, Server, ServerToClientPayload } from './server.ts';
+import type { RequestPayload, ResponsePayload, Server } from './server.ts';
 import type { Promisify } from './util.ts';
 
 // type function to extract the second template parameter
@@ -20,7 +20,7 @@ type inferClient<$Routes> = {
 
 function proxyTargetDummy() {}
 
-type RequestSender = ({ path, input }: RequestPayload) => Promise<ServerToClientPayload>;
+type RequestSender = ({ path, input }: RequestPayload) => Promise<ResponsePayload>;
 
 export function createClient<Server>(requestSender: RequestSender) {
   return createProxy([]) as any as inferClient<inferRoutes<Server>>;
@@ -34,17 +34,17 @@ export function createClient<Server>(requestSender: RequestSender) {
       // becomes the `apply` function for the Proxy created below
       async [functionName](_target: any, _thisArg: any, argArray: any[]) {
         // communicate with the server via the function configured by the library user
-        const serverToClientPayload = await requestSender({
+        const responsePayload = await requestSender({
           path: currentPath,
           input: argArray[0],
         });
-        if ('error' in serverToClientPayload) {
+        if ('error' in responsePayload) {
           // re-create the server exception on the client.
           // the custom Error class creates a more beautiful entry in the console
           class RpcServerError extends Error {};
-          throw new RpcServerError(`"${serverToClientPayload.error}"`);
+          throw new RpcServerError(`"${responsePayload.error}"`);
         }
-        return serverToClientPayload.output;
+        return responsePayload.output;
       },
     };
 

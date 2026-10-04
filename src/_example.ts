@@ -46,7 +46,7 @@ server.invokeRoute(
 // ---------------------------------------------------------
 http.createServer(async (request, response) => {
   if (request.method === 'POST' && request.url!.startsWith('/rpc/')) {
-    const serverToClientPayload = await server.invokeRoute(
+    const responsePayload = await server.invokeRoute(
       {
         path: request.url!.replace(/^\/rpc\//, '').split('/'),
         input: JSON.parse(await readBodyAsString(request)),
@@ -54,7 +54,7 @@ http.createServer(async (request, response) => {
       { user: 'ye' },
     );
     response.writeHead(200);
-    response.end(JSON.stringify(serverToClientPayload));
+    response.end(JSON.stringify(responsePayload));
   }
 }).listen(3000);
 
@@ -68,7 +68,7 @@ const client = rpc.createClient<MyServer>(async ({ path, input }) => {
       body: JSON.stringify(input),
     },
   );
-  return await httpResponse.json() as rpc.ServerToClientPayload;
+  return await httpResponse.json() as rpc.ResponsePayload;
 });
 
 // test the client

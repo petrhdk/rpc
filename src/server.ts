@@ -15,11 +15,7 @@ export interface RequestPayload {
   input: unknown,
 }
 
-export type ServerToClientPayload = {
-  output: unknown,
-} | {
-  error: string,
-};
+export type ResponsePayload = { output: unknown } | { error: string };
 
 // [types]: server stages
 // ---------------------------------------------------------
@@ -32,7 +28,7 @@ export interface Server<InitialContext, Routes> {
   /** @internal */
   routes: Routes,
 
-  invokeRoute: ({ path, input }: RequestPayload, initialContext: InitialContext) => Promise<ServerToClientPayload>,
+  invokeRoute: ({ path, input }: RequestPayload, initialContext: InitialContext) => Promise<ResponsePayload>,
 }
 
 // [implementation]: empty server (starting point)
@@ -110,7 +106,7 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
         error = String(e);
       }
 
-      // response (ServerToClientPayload)
+      // response payload
       return (error !== undefined)
         ? { error }
         : { output };
