@@ -18,8 +18,6 @@ type inferClient<$Routes> = {
     : inferClient<$Routes[$K]>;
 };
 
-function proxyTargetDummy() {}
-
 type RequestSender = ({ path, input }: RequestPayload) => Promise<ResponsePayload>;
 
 export function createClient<Server>(requestSender: RequestSender) {
@@ -48,7 +46,7 @@ export function createClient<Server>(requestSender: RequestSender) {
       },
     };
 
-    return new Proxy(proxyTargetDummy, {
+    return new Proxy(() => {}, {
       // when the proxy is used as a function
       apply: tempContainer[functionName],
 
