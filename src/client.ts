@@ -21,7 +21,7 @@ type inferClient<$Routes> = {
 function proxyTargetDummy() {}
 
 type ClientRequestSender = (
-  clientToServerPayload: ClientToServerPayload
+  clientToServerPayload: ClientToServerPayload,
 ) => Promise<ServerToClientPayload>;
 
 export function createClient<Server>(requestSender: ClientRequestSender) {

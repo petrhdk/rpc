@@ -18,7 +18,13 @@ export default antfu(
       'style/arrow-parens': ['error', 'always'], // https://eslint.style/rules/js/arrow-parens
 
       /* put operators at the end of the former line if there is a line break (especially the `=`) */
-      'style/operator-linebreak': ['error', 'after', { overrides: { '?': 'before', ':': 'before' } }], // https://eslint.style/rules/js/operator-linebreak
+      'style/operator-linebreak': ['error', 'after', { // https://eslint.style/rules/js/operator-linebreak
+        overrides: {
+          '?': 'before',
+          ':': 'before',
+          '|': 'before',
+        },
+      }],
 
       /* allow fully customized use of curly braces and line breaks after 'if', 'else', 'which', 'for', ... */
       'curly': ['off'], // https://eslint.org/docs/latest/rules/curly

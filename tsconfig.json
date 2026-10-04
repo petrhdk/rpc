@@ -1,30 +1,21 @@
-/* eslint-disable jsonc/sort-keys */
 {
-  "include": ["src/**/*"],
-
   "compilerOptions": {
-    /* compiler output */
-    "outDir": "dist",
-    "noEmit": true, // because bundler will generate the output files
-    "target": "ESNext", // output javascript version (before bundling)
-    "module": "ESNext", // output module syntax (before bundling)
-
-    /* behavior */
-    "lib": ["ESNext", "DOM", "DOM.Iterable"], // which type definitions of advanced language features to load
-    "moduleResolution": "Bundler", // how import statements/urls are resolved
-    "esModuleInterop": true, // "recommended" in docs // fix for es import of commonjs modules
-    "skipLibCheck": true, // "recommended" in docs // skip type checking of declaration files (.d.ts)
-    "strict": true,
-    "isolatedModules": true,
+    "target": "esnext",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
-    "allowSyntheticDefaultImports": true, // (already the default)
-    "forceConsistentCasingInFileNames": true, // (already the default)
-    "useDefineForClassFields": true, // (already the default)
-    "resolveJsonModule": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "stripInternal": true // remove code marked with @internal from .d.ts output
+    "strict": true,
+    "noEmit": true,
+    "outDir": "dist",
+    "stripInternal": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
     // "noErrorTruncation": true
-  }
+  },
+  "include": [
+    "src/**/*",
+    "eslint.config.js",
+    "vite.config.lib-build.ts"
+  ]
 }
