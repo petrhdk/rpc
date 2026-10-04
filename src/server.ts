@@ -75,7 +75,7 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
         // validate `path`
         path = z.array(z.string()).parse(path);
 
-        // find the procedure represented by `path`
+        // find the `procedure` represented by `path`
         // (by traversing into the routes, starting at the top-level dictionary)
         let target: any = this.routes;
         while (path.length) {
@@ -88,18 +88,18 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
         }
         const procedure = target as Procedure<unknown, unknown, unknown, unknown>;
 
-        // run procedure middleware
+        // run the procedure's `middlewares`
         let context = initialContext;
         for (const middleware of procedure.middlewares) {
           context = await middleware(context); // may throw exception
         }
 
-        // run procedure inputValidator (using zod)
+        // validate `input` using the procedure's `inputSchema`
         const parsedInput = isDefined(procedure.inputSchema)
           ? procedure.inputSchema.parse(input) // may throw exception
           : undefined;
 
-        // invoke procedure handler
+        // invoke the procedure's `handler`
         output = await procedure.handler(parsedInput, context); // may throw exception
       }
       catch (e) {
