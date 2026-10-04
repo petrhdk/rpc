@@ -102,7 +102,7 @@ function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<P
         // run procedure inputValidator (using zod)
         const parsedInput = isDefined(procedure.inputSchema)
           ? procedure.inputSchema.parse(input) // may throw exception
-          : input;
+          : undefined;
 
         // invoke procedure handler
         output = await procedure.handler(parsedInput, context); // may throw exception
