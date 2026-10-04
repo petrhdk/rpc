@@ -16,7 +16,7 @@ interface MyServerContext {
 // define routes/procedures
 // ---------------------------------------------------------
 const procedure = rpc.procedure
-  .initialContext<MyServerContext>()
+  .expects<MyServerContext>()
   .use(({ user }) => ({ user, abc: 123 }))
   .use((previousContext) => ({ ...previousContext, xyz: 456 }))
   .input(z.string())

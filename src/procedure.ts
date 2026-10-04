@@ -21,7 +21,7 @@ interface InputSchema<Input> {
 // [types]: procedure stages
 // ---------------------------------------------------------
 interface ProcedureEmpty {
-  initialContext: <InitialContext>() => ProcedureWithInitialContext<InitialContext>,
+  expects: <InitialContext>() => ProcedureWithInitialContext<InitialContext>,
   use: <FinalContext>(middleware: Middleware<unknown, FinalContext>) => ProcedureWithMiddleware<unknown, FinalContext>,
   input: <Input>(inputSchema: InputSchema<Input>) => ProcedureWithInputSchema<unknown, unknown, Input>,
   define: <Output>(handler: Handler<unknown, void, Output>) => Procedure<unknown, unknown, void, Output>,
@@ -79,8 +79,8 @@ export interface Procedure<InitialContext, FinalContext, Input, Output> {
 // [implementation]: empty procedure (starting point)
 // ---------------------------------------------------------
 export const procedure: ProcedureEmpty = {
-  initialContext<InitialContext>() {
-    return ProcedureEmpty_initialContext<InitialContext>();
+  expects<InitialContext>() {
+    return ProcedureEmpty_expects<InitialContext>();
   },
   use(middleware) {
     return ProcedureEmpty_use(middleware);
@@ -95,7 +95,7 @@ export const procedure: ProcedureEmpty = {
 
 // [implementation]: stage transitions
 // ---------------------------------------------------------
-function ProcedureEmpty_initialContext<InitialContext>(): ProcedureWithInitialContext<InitialContext> {
+function ProcedureEmpty_expects<InitialContext>(): ProcedureWithInitialContext<InitialContext> {
   return {
     use(middleware) {
       return ProcedureWithInitialContext_use(this, middleware);
