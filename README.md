@@ -1,65 +1,90 @@
-# Installation
-```console
+# RPC
+A high-performance remote procedure call (RPC) library for Typescript.
+
+## How it works
+
+### Request
+![RPC Request Schema](./docs/request.drawio.svg)
+
+### Response
+![RPC Response Schema](./docs/response.drawio.svg)
+
+<br>
+
+## Usage
+
+### Installing
+```bash
 npm install @petrhdk/rpc
 ```
+https://www.npmjs.com/package/@petrhdk/rpc
 
-<br><br>
 
-# Usage
+### Server code
 ```ts
-// declare type utils
-// ---------------------------------------------------------
-interface MyServerContext {
-  user: string,
-}
+import { Buffer } from 'node:buffer';
+import * as http from 'node:http';
+import * as rpc from '@petrhdk/rpc';
 
-// define routes/procedures
-// ---------------------------------------------------------
-const procedure = rpc.procedure
-  .expects<MyServerContext>()
-  .use(({ user }) => ({ user, abc: 123 }))
-  .use((previousContext) => ({ ...previousContext, xyz: 456 }))
-  .input(z.string())
-  .define((input: string, context) => {
-    console.log({ context, input });
-    return 123;
-  });
+export interface MyServerContext {
+  requestHeaders: http.IncomingHttpHeaders,
+};
 
 const server = rpc.server
   .initialContext<MyServerContext>()
   .routes({
-    call: {
-      me: {
-        maybe: procedure,
-      },
+    v1: {
+      getItem: rpc.procedure
+        .expects<MyServerContext>()
+        .use(({ requestHeaders }) => {
+          // ...
+          return { authenticatedUser: 'user1' };
+        })
+        .input(z.object({
+          itemId: z.string(),
+        }))
+        .define(({ itemId }, { authenticatedUser }) => {
+          // ...
+          const item = { /* ... */ };
+          return item;
+        }),
     },
   });
 export type MyServer = typeof server;
 
-// test route invocation
-// ---------------------------------------------------------
-server.invokeRoute({
-  path: ['call', 'me', 'maybe'],
-  input: 'asdf',
-  initialContext: { user: 'ye' },
-});
-
-// create HTTP server (which forwards to RPC server)
-// ---------------------------------------------------------
 http.createServer(async (request, response) => {
-  if (request.method === 'POST' && request.url!.startsWith('/rpc/')) {
+  // handle RPC requests
+  if (request.method === 'POST') {
     const responsePayload = await server.invokeRoute({
-      path: request.url!.replace(/^\/rpc\//, '').split('/'),
+      path: (request.url ?? '/').split('/').slice(1),
       input: JSON.parse(await readBodyAsString(request)),
-      initialContext: { user: 'ye' },
+      initialContext: {
+        requestHeaders: request.headers,
+      },
     });
     response.writeHead(200);
     response.end(JSON.stringify(responsePayload));
   }
+
+  // handle preflight requests
+  if (request.method === 'OPTIONS') {
+    // ...
+  }
 }).listen(3000);
 
-// create RPC client (which talks to server via HTTP)
-// ---------------------------------------------------------
+async function readBodyAsString(request: http.IncomingMessage) {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString();
+}
+```
+
+### Client code
+```ts
+import * as rpc from '@petrhdk/rpc';
+
 const client = rpc.createClient<MyServer>(async ({ path, input }) => {
   const httpResponse = await fetch(
     `https://example.com/rpc/${path.join('/')}`,
@@ -71,18 +96,15 @@ const client = rpc.createClient<MyServer>(async ({ path, input }) => {
   return await httpResponse.json() as rpc.ResponsePayload;
 });
 
-// test the client
-// ---------------------------------------------------------
-client.call.me.maybe('asdf');
+client.v1.getItem({ itemId: 'abc' });
 ```
-(source: [`src/_example.ts`](src/_example.ts))
 
-<br><br>
+<br>
 
-# Query builder
-![](docs/procedure-builder.drawio.svg)
+## For maintainers
 
-<br><br>
+### Procedure builder
+![RPC Procedure builder schema](docs/procedure-builder.drawio.svg)
 
-# Server builder
-![](docs/server-builder.drawio.svg)
+### Server builder
+![RPC Server builder schema](docs/server-builder.drawio.svg)
