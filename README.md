@@ -89,7 +89,7 @@ const client = rpc.client
   .forServer<MyServer>()
   .sendRequests(async ({ path, input }) => {
     const httpResponse = await fetch(
-      `https://example.com/rpc/${path.join('/')}`,
+      `https://example.com/${path.join('/')}`,
       {
         method: 'POST',
         body: JSON.stringify(input),
