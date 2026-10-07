@@ -16,7 +16,7 @@ const server = rpc.server
   .routes({
     v1: {
       getItem: rpc.procedure
-        .expects<MyServerContext>()
+        .needsInitialContext<MyServerContext>()
         .use(({ requestHeaders }) => { // eslint-disable-line unused-imports/no-unused-vars
           // ...
           return { authenticatedUser: 'user1' };

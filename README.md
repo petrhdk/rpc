@@ -35,7 +35,7 @@ const server = rpc.server
   .routes({
     v1: {
       getItem: rpc.procedure
-        .expects<MyServerContext>()
+        .needsInitialContext<MyServerContext>()
         .use(({ requestHeaders }) => {
           // ...
           return { authenticatedUser: 'user1' };
