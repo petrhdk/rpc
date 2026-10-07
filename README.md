@@ -1,6 +1,14 @@
 # RPC
 A high-performance remote procedure call (RPC) library for Typescript.
 
+## How it works
+
+### Request
+![RPC Request Schema](./docs/request.drawio.svg)
+
+### Response
+![RPC Response Schema](./docs/response.drawio.svg)
+
 <br>
 
 ## Usage
@@ -93,19 +101,10 @@ client.v1.getItem({ itemId: 'abc' });
 
 <br>
 
-## How it works
-
-### Request
-![RPC Request Schema](./docs/request.drawio.svg)
-
-### Response
-![RPC Response Schema](./docs/response.drawio.svg)
+## For maintainers
 
 ### Procedure builder
 ![RPC Procedure builder schema](docs/procedure-builder.drawio.svg)
 
 ### Server builder
 ![RPC Server builder schema](docs/server-builder.drawio.svg)
-
-### Client builder
-![RPC Client builder schema](docs/client-builder.drawio.svg)
