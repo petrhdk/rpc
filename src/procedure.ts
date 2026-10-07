@@ -6,6 +6,10 @@ import type { MaybePromise } from './util.ts';
 type Middleware<OldContext, NewContext> =
   (context: OldContext) => MaybePromise<NewContext>;
 
+type MiddlewareChain<InitialContext, FinalContext> =
+  | [Middleware<InitialContext, FinalContext>]
+  | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>];
+
 type Handler<FinalContext, Input, Output> =
   (input: Input, context: FinalContext) => MaybePromise<Output>;
 
@@ -30,9 +34,7 @@ interface ProcedureWithInitialContext<InitialContext> {
 };
 
 interface ProcedureWithMiddleware<InitialContext, FinalContext> {
-  _middlewares:
-    | [Middleware<InitialContext, FinalContext>]
-    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
+  _middlewares: MiddlewareChain<InitialContext, FinalContext>,
 
   use: <NewFinalContext>(middleware: Middleware<FinalContext, NewFinalContext>) => ProcedureWithMiddleware<InitialContext, NewFinalContext>,
   input: <Input>(inputSchema: InputSchema<Input>) => ProcedureWithInputSchema<InitialContext, FinalContext, Input>,
@@ -42,8 +44,7 @@ interface ProcedureWithMiddleware<InitialContext, FinalContext> {
 interface ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
   _middlewares:
     | []
-    | [Middleware<InitialContext, FinalContext>]
-    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
+    | MiddlewareChain<InitialContext, FinalContext>,
 
   _inputSchema: InputSchema<Input>,
 
@@ -53,8 +54,7 @@ interface ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
 export interface Procedure<InitialContext, FinalContext, Input, Output> {
   _middlewares:
     | []
-    | [Middleware<InitialContext, FinalContext>]
-    | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
+    | MiddlewareChain<InitialContext, FinalContext>,
 
   _inputSchema: [Input] extends [void]
     ? InputSchema<Input> | undefined
