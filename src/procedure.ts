@@ -30,8 +30,7 @@ interface ProcedureWithInitialContext<InitialContext> {
 };
 
 interface ProcedureWithMiddleware<InitialContext, FinalContext> {
-  /** @internal */
-  middlewares:
+  _middlewares:
     | [Middleware<InitialContext, FinalContext>]
     | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
 
@@ -41,38 +40,27 @@ interface ProcedureWithMiddleware<InitialContext, FinalContext> {
 };
 
 interface ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
-  /** @internal */
-  middlewares:
+  _middlewares:
     | []
     | [Middleware<InitialContext, FinalContext>]
     | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
 
-  /** @internal */
-  inputSchema: InputSchema<Input>,
+  _inputSchema: InputSchema<Input>,
 
   define: <Output>(handler: Handler<FinalContext, Input, Output>) => Procedure<InitialContext, FinalContext, Input, Output>,
 };
 
 export interface Procedure<InitialContext, FinalContext, Input, Output> {
-  /** @internal */
-  middlewares:
+  _middlewares:
     | []
     | [Middleware<InitialContext, FinalContext>]
     | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
 
-  /** @internal */
-  inputSchema: [Input] extends [void]
+  _inputSchema: [Input] extends [void]
     ? InputSchema<Input> | undefined
     : InputSchema<Input>,
 
-  /** @internal */
-  handler: Handler<FinalContext, Input, Output>,
-
-  /**
-   * internal type discriminator.
-   * (this value is never actually assigned, but we declare it (as optional) in this type interface so that typescript will not interpret this interface as type `{}` after stripping all properties marked as `@internal` (as it happens when building the library .d.ts files) - because this would mean that in a user's application code ANY value passes the test `value extends Procedure`, which is not what we want.)
-   */
-  $type?: 'rpc.Procedure',
+  _handler: Handler<FinalContext, Input, Output>,
 };
 
 // ------------------------------------------------------------

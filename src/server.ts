@@ -27,8 +27,7 @@ interface ServerWithInitialContext<InitialContext> {
 }
 
 export interface Server<InitialContext, Routes> {
-  /** @internal */
-  routes: Routes,
+  _routes: Routes,
 
   invokeRoute: ({ path, input, initialContext }: { path: string[], input: unknown, initialContext: InitialContext }) => Promise<ResponsePayload>,
 }
@@ -52,7 +51,7 @@ function routes<
   Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>,
 >(routes: Routes): Server<InitialContext, Routes> {
   return {
-    routes,
+    _routes: routes,
 
     async invokeRoute({ path, input, initialContext }) {
       let output: unknown | undefined;
@@ -69,7 +68,7 @@ function routes<
 
         // find the `procedure` represented by `path`
         // (by traversing into the routes, starting at the top-level dictionary)
-        let target: any = this.routes;
+        let target: any = this._routes;
         while (path.length) {
           // security measure against code injection via prototype chain
           if (!Object.hasOwn(target, path[0])) {
@@ -82,17 +81,17 @@ function routes<
 
         // run the procedure's `middlewares`
         let context = initialContext;
-        for (const middleware of procedure.middlewares) {
+        for (const middleware of procedure._middlewares) {
           context = await middleware(context); // may throw exception
         }
 
         // validate `input` using the procedure's `inputSchema`
-        const parsedInput = isDefined(procedure.inputSchema)
-          ? procedure.inputSchema.parse(input) // may throw exception
+        const parsedInput = isDefined(procedure._inputSchema)
+          ? procedure._inputSchema.parse(input) // may throw exception
           : undefined;
 
         // invoke the procedure's `handler`
-        output = await procedure.handler(parsedInput, context); // may throw exception
+        output = await procedure._handler(parsedInput, context); // may throw exception
       }
       catch (e) {
         error = String(e);
