@@ -108,3 +108,6 @@ client.v1.getItem({ itemId: 'abc' });
 
 ### Server builder
 ![RPC Server builder schema](docs/server-builder.drawio.svg)
+
+### Client builder
+![RPC Client builder schema](docs/client-builder.drawio.svg)
