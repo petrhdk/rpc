@@ -1,26 +1,29 @@
-/**
- * Hint:
- *  - See README.md to understand the conceptual design of the server builder.
- */
-
 import type { Procedure } from './procedure.ts';
 import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
 import { z } from 'zod';
 
-// [types]: util types
-// ---------------------------------------------------------
+// ------------------------------------------------------------
+// type utils
+// ------------------------------------------------------------
 export interface RequestPayload {
   path: string[],
   input: unknown,
 }
 
-export type ResponsePayload = { output: unknown } | { error: string };
+export type ResponsePayload =
+  | { output: unknown }
+  | { error: string };
 
-// [types]: server stages
-// ---------------------------------------------------------
-interface ServerEmpty<InitialContext> {
-  mustProvideInitialContext: <NewInitialContext>() => ServerEmpty<NewInitialContext>,
+// ------------------------------------------------------------
+// server types
+// ------------------------------------------------------------
+interface ServerEmpty {
+  mustProvideInitialContext: <InitialContext>() => ServerWithInitialContext<InitialContext>,
+  routes: <Routes extends RecursiveDictionary<Procedure<void, any, any, any>>>(routes: Routes) => Server<void, Routes>,
+}
+
+interface ServerWithInitialContext<InitialContext> {
   routes: <Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(routes: Routes) => Server<InitialContext, Routes>,
 }
 
@@ -31,39 +34,27 @@ export interface Server<InitialContext, Routes> {
   invokeRoute: ({ path, input, initialContext }: { path: string[], input: unknown, initialContext: InitialContext }) => Promise<ResponsePayload>,
 }
 
-// [implementation]: empty server (starting point)
-// ---------------------------------------------------------
-export const server: ServerEmpty<void> = {
-  mustProvideInitialContext<InitialContext>() {
-    return ServerEmpty_mustProvideInitialContext<InitialContext>();
-  },
-  routes(routes) {
-    return ServerEmpty_routes(this, routes);
-  },
+// ------------------------------------------------------------
+// implementation
+// ------------------------------------------------------------
+export const server: ServerEmpty = {
+  mustProvideInitialContext,
+  routes,
 };
 
-// [implementation]: stage transitions
-// ---------------------------------------------------------
-function ServerEmpty_mustProvideInitialContext<InitialContext>(): ServerEmpty<InitialContext> {
+function mustProvideInitialContext<InitialContext>(): ServerWithInitialContext<InitialContext> {
   return {
-    mustProvideInitialContext<NewInitialContext>() {
-      return ServerEmpty_mustProvideInitialContext<NewInitialContext>();
-    },
-    routes(routes) {
-      return ServerEmpty_routes(this, routes);
-    },
+    routes,
   };
 }
 
-function ServerEmpty_routes<InitialContext, Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(
-  _oldServer: ServerEmpty<InitialContext>,
-  routes: Routes,
-): Server<InitialContext, Routes> {
+function routes<
+  InitialContext,
+  Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>,
+>(routes: Routes): Server<InitialContext, Routes> {
   return {
-    // the server's private property holding the procedure definitions
     routes,
 
-    // the server's public method for invoking a route/procedure
     async invokeRoute({ path, input, initialContext }) {
       let output: unknown | undefined;
       let error: string | undefined;
