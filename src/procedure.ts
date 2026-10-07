@@ -61,7 +61,9 @@ export interface Procedure<InitialContext, FinalContext, Input, Output> {
     | [Middleware<InitialContext, any>, ...Middleware<any, any>[], Middleware<any, FinalContext>],
 
   /** @internal */
-  inputSchema: [Input] extends [void] ? (InputSchema<Input> | undefined) : InputSchema<Input>,
+  inputSchema: [Input] extends [void]
+    ? InputSchema<Input> | undefined
+    : InputSchema<Input>,
 
   /** @internal */
   handler: Handler<FinalContext, Input, Output>,
@@ -78,63 +80,40 @@ export interface Procedure<InitialContext, FinalContext, Input, Output> {
 // ------------------------------------------------------------
 export const procedure: ProcedureEmpty = {
   needsInitialContext,
-  use(middleware) { return use(this, middleware); },
-  input(inputSchema) { return input(this, inputSchema); },
-  define(handler) { return define(this, handler); },
+  use,
+  input,
+  define,
 };
 
-function needsInitialContext<InitialContext>(): ProcedureWithInitialContext<InitialContext> {
+function needsInitialContext(this: any) {
   return {
-    use(middleware) { return use(this, middleware); },
-    input(inputSchema) { return input(this, inputSchema); },
-    define(handler) { return define(this, handler); },
+    use,
+    input,
+    define,
   };
 }
 
-function use<InitialContext, OldFinalContext, NewFinalContext>(
-  oldProcedure:
-    | ProcedureEmpty
-    | ProcedureWithInitialContext<InitialContext>
-    | ProcedureWithMiddleware<InitialContext, OldFinalContext>,
-  middleware: Middleware<InitialContext, NewFinalContext> | Middleware<OldFinalContext, NewFinalContext>,
-): ProcedureWithMiddleware<InitialContext, NewFinalContext> {
+function use(this: any, middleware: any): any {
   return {
-    middlewares: ('middlewares' in oldProcedure)
-      ? [...oldProcedure.middlewares, middleware as Middleware<OldFinalContext, NewFinalContext>]
-      : [middleware as Middleware<InitialContext, NewFinalContext>],
-    use(middleware) { return use(this, middleware); },
-    input(inputSchema) { return input(this, inputSchema); },
-    define(handler) { return define(this, handler); },
+    middlewares: [...this.middlewares, middleware],
+    use,
+    input,
+    define,
   };
 }
 
-function input<InitialContext, FinalContext, Input>(
-  oldProcedure:
-    | ProcedureEmpty
-    | ProcedureWithInitialContext<InitialContext>
-    | ProcedureWithMiddleware<InitialContext, FinalContext>,
-  inputSchema: InputSchema<Input>,
-): ProcedureWithInputSchema<InitialContext, FinalContext, Input> {
+function input(this: any, inputSchema: any): any {
   return {
-    middlewares: ('middlewares' in oldProcedure) ? oldProcedure.middlewares : [],
+    middlewares: this.middlewares ?? [],
     inputSchema,
-    define(handler) { return define(this, handler); },
+    define,
   };
 }
 
-function define<InitialContext, FinalContext, Input, Output>(
-  oldProcedure:
-    | ProcedureEmpty
-    | ProcedureWithInitialContext<InitialContext>
-    | ProcedureWithMiddleware<InitialContext, FinalContext>
-    | ProcedureWithInputSchema<InitialContext, FinalContext, Input>,
-  handler: Handler<FinalContext, Input, Output>,
-): Procedure<InitialContext, FinalContext, Input, Output> {
+function define(this: any, handler: any): any {
   return {
-    middlewares: ('middlewares' in oldProcedure) ? oldProcedure.middlewares : [],
-    inputSchema: (
-      ('inputSchema' in oldProcedure) ? oldProcedure.inputSchema : undefined
-    ) as ([Input] extends [void] ? (InputSchema<Input> | undefined) : InputSchema<Input>),
+    middlewares: this.middlewares ?? [],
+    inputSchema: this.inputSchema ?? undefined,
     handler,
   };
 }
