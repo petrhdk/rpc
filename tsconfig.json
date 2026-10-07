@@ -3,7 +3,8 @@
     "target": "esnext",
     "lib": ["ESNext"],
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
+    "types": ["node"],
     "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,
@@ -14,8 +15,6 @@
     // "noErrorTruncation": true
   },
   "include": [
-    "src/**/*",
-    "eslint.config.js",
-    "vite.config.lib-build.ts"
+    "src/**/*"
   ]
 }
