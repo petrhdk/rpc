@@ -31,7 +31,7 @@ export interface MyServerContext {
 };
 
 const server = rpc.server
-  .initialContext<MyServerContext>()
+  .mustProvideInitialContext<MyServerContext>()
   .routes({
     v1: {
       getItem: rpc.procedure

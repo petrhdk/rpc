@@ -20,7 +20,7 @@ export type ResponsePayload = { output: unknown } | { error: string };
 // [types]: server stages
 // ---------------------------------------------------------
 interface ServerEmpty<InitialContext> {
-  initialContext: <NewInitialContext>() => ServerEmpty<NewInitialContext>,
+  mustProvideInitialContext: <NewInitialContext>() => ServerEmpty<NewInitialContext>,
   routes: <Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(routes: Routes) => Server<InitialContext, Routes>,
 }
 
@@ -33,9 +33,9 @@ export interface Server<InitialContext, Routes> {
 
 // [implementation]: empty server (starting point)
 // ---------------------------------------------------------
-export const server: ServerEmpty<undefined> = {
-  initialContext<InitialContext>() {
-    return ServerEmpty_initialContext<InitialContext>();
+export const server: ServerEmpty<void> = {
+  mustProvideInitialContext<InitialContext>() {
+    return ServerEmpty_mustProvideInitialContext<InitialContext>();
   },
   routes(routes) {
     return ServerEmpty_routes(this, routes);
@@ -44,10 +44,10 @@ export const server: ServerEmpty<undefined> = {
 
 // [implementation]: stage transitions
 // ---------------------------------------------------------
-function ServerEmpty_initialContext<InitialContext>(): ServerEmpty<InitialContext> {
+function ServerEmpty_mustProvideInitialContext<InitialContext>(): ServerEmpty<InitialContext> {
   return {
-    initialContext<NewInitialContext>() {
-      return ServerEmpty_initialContext<NewInitialContext>();
+    mustProvideInitialContext<NewInitialContext>() {
+      return ServerEmpty_mustProvideInitialContext<NewInitialContext>();
     },
     routes(routes) {
       return ServerEmpty_routes(this, routes);
