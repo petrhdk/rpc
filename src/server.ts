@@ -1,7 +1,6 @@
 import type { Procedure } from './procedure.ts';
 import type { RecursiveDictionary } from './util.ts';
 import { isDefined } from '@petrhdk/util';
-import { z } from 'zod';
 
 // ------------------------------------------------------------
 // type utils
@@ -64,7 +63,9 @@ function routes<
       //   - if an exception is thrown, this function will only return `{ error }`
       try {
         // validate `path`
-        path = z.array(z.string()).parse(path);
+        if (!Array.isArray(path) || path.some((string) => typeof string !== 'string')) {
+          throw new Error('Path has an unsupported format (it should be an array of strings)');
+        }
 
         // find the `procedure` represented by `path`
         // (by traversing into the routes, starting at the top-level dictionary)
