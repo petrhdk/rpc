@@ -85,16 +85,18 @@ async function readBodyAsString(request: http.IncomingMessage) {
 ```ts
 import * as rpc from '@petrhdk/rpc';
 
-const client = rpc.createClient<MyServer>(async ({ path, input }) => {
-  const httpResponse = await fetch(
-    `https://example.com/rpc/${path.join('/')}`,
-    {
-      method: 'POST',
-      body: JSON.stringify(input),
-    },
-  );
-  return await httpResponse.json() as rpc.ResponsePayload;
-});
+const client = rpc.client
+  .forServer<MyServer>()
+  .sendRequests(async ({ path, input }) => {
+    const httpResponse = await fetch(
+      `https://example.com/rpc/${path.join('/')}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(input),
+      },
+    );
+    return await httpResponse.json() as rpc.ResponsePayload;
+  });
 
 client.v1.getItem({ itemId: 'abc' });
 ```

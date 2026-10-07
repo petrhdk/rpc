@@ -2,15 +2,21 @@ import type { Procedure } from './procedure.ts';
 import type { RequestPayload, ResponsePayload, Server } from './server.ts';
 import type { Promisify } from './util.ts';
 
-// type function to extract the second template parameter
-// from a given 'Server' type
+// ------------------------------------------------------------
+// type utils
+// ------------------------------------------------------------
+
+/**
+ * A type function to extract the `Routes` template parameter from from a given `Server<InitialContext, Routes>` type.
+ */
 type inferRoutes<$Server> =
   $Server extends Server<any, infer $Routes>
     ? $Routes
     : never;
 
-// recursive type function that generates a nested dictionary type based off
-// the nested routes dictionary from the server
+/**
+ * A type function that recursively generates a nested dictionary type based on a `Routes` dictionary type.
+ */
 type inferClient<$Routes> = {
   [$K in keyof $Routes]:
   $Routes[$K] extends Procedure<any, any, infer $Input, infer $Output>
@@ -18,10 +24,38 @@ type inferClient<$Routes> = {
     : inferClient<$Routes[$K]>;
 };
 
+/**
+ * The type of the function passed to `.sendRequests()`.
+ */
 type RequestSender = ({ path, input }: RequestPayload) => Promise<ResponsePayload>;
 
-export function createClient<Server>(requestSender: RequestSender) {
-  return createProxy([]) as any as inferClient<inferRoutes<Server>>;
+// ------------------------------------------------------------
+// client types
+// ------------------------------------------------------------
+interface ClientEmpty {
+  forServer: <Server>() => ClientWithRoutes<inferRoutes<Server>>,
+}
+
+interface ClientWithRoutes<Routes> {
+  sendRequests: (requestSender: RequestSender) => inferClient<Routes>,
+}
+
+// ------------------------------------------------------------
+// implementation
+// ------------------------------------------------------------
+
+export const client: ClientEmpty = {
+  forServer,
+};
+
+function forServer() {
+  return {
+    sendRequests,
+  };
+}
+
+function sendRequests<Routes>(requestSender: RequestSender): inferClient<Routes> {
+  return createProxy([]) as any as inferClient<Routes>;
 
   function createProxy(currentPath: string[]) {
     const functionName = currentPath.length ? currentPath.at(-1)! : 'rpcClient';
