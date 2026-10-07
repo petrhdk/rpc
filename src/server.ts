@@ -14,6 +14,11 @@ export type ResponsePayload =
   | { output: unknown }
   | { error: string };
 
+type ProcedureWithPartialInitialContextRequirement<InitialContext, _1, _2, _3> =
+  | Procedure<InitialContext, _1, _2, _3>
+  | Procedure<Partial<InitialContext>, _1, _2, _3>
+  | Procedure<void, _1, _2, _3>;
+
 // ------------------------------------------------------------
 // server types
 // ------------------------------------------------------------
@@ -23,7 +28,7 @@ interface ServerEmpty {
 }
 
 interface ServerWithInitialContext<InitialContext> {
-  routes: <Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>>(routes: Routes) => Server<InitialContext, Routes>,
+  routes: <Routes extends RecursiveDictionary<ProcedureWithPartialInitialContextRequirement<InitialContext, any, any, any>>>(routes: Routes) => Server<InitialContext, Routes>,
 }
 
 export interface Server<InitialContext, Routes> {
@@ -48,7 +53,7 @@ function mustProvideInitialContext<InitialContext>(): ServerWithInitialContext<I
 
 function routes<
   InitialContext,
-  Routes extends RecursiveDictionary<Procedure<InitialContext, any, any, any>>,
+  Routes extends RecursiveDictionary<ProcedureWithPartialInitialContextRequirement<InitialContext, any, any, any>>,
 >(routes: Routes): Server<InitialContext, Routes> {
   return {
     _routes: routes,
