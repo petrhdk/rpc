@@ -1,4 +1,3 @@
 export { client } from './client.ts';
-export { procedure } from './procedure.ts';
-export { server } from './server.ts';
-export type { RequestPayload, ResponsePayload } from './server.ts';
+export { procedure, type Procedure } from './procedure.ts';
+export { type RequestPayload, type ResponsePayload, server, type Server } from './server.ts';
