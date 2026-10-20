@@ -83,7 +83,7 @@ function needsInitialContext(this: any) {
 
 function use(this: any, middleware: any): any {
   return {
-    middlewares: [...this.middlewares, middleware],
+    middlewares: [...(this.middlewares ?? []), middleware],
     use,
     input,
     define,
