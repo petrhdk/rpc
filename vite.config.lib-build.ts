@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     outDir: 'dist',
-    minify: 'terser',
+    minify: false,
     terserOptions: {
       mangle: {
         reserved: ['RpcServerError'],
