@@ -36,7 +36,7 @@ export type MyServer = typeof server;
 http.createServer(async (request, response) => {
   // handle RPC requests
   if (request.method === 'POST') {
-    const responsePayload = await server.invokeRoute({
+    const { responsePayload } = await server.invokeRoute({
       path: (request.url ?? '/').split('/').slice(1),
       input: JSON.parse(await readBodyAsString(request)),
       initialContext: {

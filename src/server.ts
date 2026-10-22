@@ -34,7 +34,14 @@ interface ServerWithInitialContext<InitialContext> {
 export interface Server<InitialContext, Routes> {
   _routes: Routes,
 
-  invokeRoute: ({ path, input, initialContext }: { path: string[], input: unknown, initialContext: InitialContext }) => Promise<ResponsePayload>,
+  invokeRoute: ({ path, input, initialContext }: {
+    path: string[],
+    input: unknown,
+    initialContext: InitialContext,
+  }) => Promise<{
+    responsePayload: ResponsePayload,
+    error?: Error | unknown,
+  }>,
 }
 
 // ------------------------------------------------------------
@@ -59,8 +66,8 @@ function routes<
     _routes: routes,
 
     async invokeRoute({ path, input, initialContext }) {
-      let output: unknown | undefined;
-      let error: string | undefined;
+      let responsePayload: ResponsePayload;
+      let error: Error | unknown | undefined;
 
       // try to invoke the route
       //   - if no exception is thrown, this function will only return `{ output }`
@@ -96,16 +103,19 @@ function routes<
           : undefined;
 
         // invoke the procedure's `handler`
-        output = await procedure._handler(parsedInput, context); // may throw exception
+        responsePayload = {
+          output: await procedure._handler(parsedInput, context), // may throw exception
+        };
       }
       catch (e) {
-        error = String(e);
+        responsePayload = {
+          error: String(e),
+        };
+        error = e;
       }
 
-      // response payload
-      return (error !== undefined)
-        ? { error }
-        : { output };
+      // give control back to the server endpoint
+      return { responsePayload, error };
     },
   };
 }
